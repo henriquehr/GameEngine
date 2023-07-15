@@ -1,11 +1,11 @@
 
 #include "engine.h"
 
-void engine::init() {
+void Engine::init() {
     initWindow();
 }
 
-void engine::run() {
+void Engine::run() {
     bool quit = false;
     SDL_Event e;
     while (!quit) {
@@ -27,11 +27,11 @@ void engine::run() {
     }
 }
 
-void engine::cleanup() {
+void Engine::cleanup() {
     SDL_DestroyWindow(window);
 }
 
-void engine::initWindow() {
+void Engine::initWindow() {
     SDL_Init(SDL_INIT_VIDEO);
     SDL_WindowFlags windowFlags = SDL_WINDOW_VULKAN;
 

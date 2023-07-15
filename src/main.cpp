@@ -1,12 +1,19 @@
 
 #include "engine.h"
 
+#include <iostream>
+
 int main(int argc, char *args[]) {
 
-    engine e = {};
-    e.init();
-    e.run();
-    e.cleanup();
+    try {
+        Engine e{};
+        e.init();
+        e.run();
+        e.cleanup();
+    } catch (const std::exception &ex) {
+        std::cerr << ex.what() << std::endl;
+        return EXIT_FAILURE;
+    }
 
-    return 0;
+    return EXIT_SUCCESS;
 }
