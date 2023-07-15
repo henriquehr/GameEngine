@@ -1,12 +1,13 @@
 #pragma once
 
 #include "pipeline.h"
+#include "window.h"
 
 #include "SDL.h"
 
 class Engine {
   private:
-    SDL_Window *window;
+    Window window{};
 
     Pipeline pipeline{"../../shaders/compiled/simple.frag.spv", "../../shaders/compiled/simple.vert.spv"};
 
@@ -14,7 +15,4 @@ class Engine {
     void init();
     void run();
     void cleanup();
-
-  private:
-    void initWindow();
 };

@@ -1,9 +1,7 @@
 
 #include "engine.h"
 
-void Engine::init() {
-    initWindow();
-}
+void Engine::init() {}
 
 void Engine::run() {
     bool quit = false;
@@ -21,23 +19,10 @@ void Engine::run() {
             }
         }
         // check if window is minimized and skip drawing
-        if (SDL_GetWindowFlags(window) & SDL_WINDOW_MINIMIZED) {
+        if (SDL_GetWindowFlags(window.getSDLWindow()) & SDL_WINDOW_MINIMIZED) {
             continue;
         }
     }
 }
 
-void Engine::cleanup() {
-    SDL_DestroyWindow(window);
-}
-
-void Engine::initWindow() {
-    SDL_Init(SDL_INIT_VIDEO);
-    SDL_WindowFlags windowFlags = SDL_WINDOW_VULKAN;
-
-    int width = 1600;
-    int height = 900;
-
-    window = SDL_CreateWindow("ASHWGA", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, width, height, windowFlags);
-    SDL_SetWindowResizable(window, SDL_TRUE);
-}
+void Engine::cleanup() {}
