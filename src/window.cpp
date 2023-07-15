@@ -20,6 +20,8 @@ void Window::initWindow() {
     SDL_SetWindowResizable(window, SDL_TRUE);
 }
 
-SDL_Window *Window::getSDLWindow() {
-    return window;
+void Window::createWindowSurface(VkInstance instance, VkSurfaceKHR *surface) {
+    if (SDL_FALSE == SDL_Vulkan_CreateSurface(window, instance, surface)) {
+        throw std::runtime_error(std::string("Failed to create surface, SDL error:") + SDL_GetError());
+    }
 }
