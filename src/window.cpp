@@ -1,15 +1,15 @@
 
 #include "window.h"
 
-Window::Window(int width, int height) {
-    initWindow(width, height);
+Window::Window(int width, int height) : width(width), height(height) {
+    initWindow();
 }
 
 Window::~Window() {
     SDL_DestroyWindow(window);
 }
 
-void Window::initWindow(int width, int height) {
+void Window::initWindow() {
     SDL_Init(SDL_INIT_VIDEO);
     SDL_WindowFlags windowFlags = SDL_WINDOW_VULKAN;
 
@@ -18,7 +18,7 @@ void Window::initWindow(int width, int height) {
 }
 
 void Window::createWindowSurface(VkInstance instance, VkSurfaceKHR *surface) {
-    if (SDL_FALSE == SDL_Vulkan_CreateSurface(window, instance, surface)) {
+    if (SDL_Vulkan_CreateSurface(window, instance, surface) == SDL_FALSE) {
         throw std::runtime_error(std::string("Failed to create surface, SDL error:") + SDL_GetError());
     }
 }

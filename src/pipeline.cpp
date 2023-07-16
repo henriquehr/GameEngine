@@ -71,15 +71,22 @@ void Pipeline::createGraphicsPipeline(const PipelineConfigInfo &configInfo, cons
     vertexInputInfo.pVertexAttributeDescriptions = nullptr;
     vertexInputInfo.pVertexBindingDescriptions = nullptr;
 
+    VkPipelineViewportStateCreateInfo viewportInfo{VK_STRUCTURE_TYPE_PIPELINE_VIEWPORT_STATE_CREATE_INFO};
+    viewportInfo.viewportCount = 1;
+    viewportInfo.pViewports = &configInfo.viewport;
+    viewportInfo.scissorCount = 1;
+    viewportInfo.pScissors = &configInfo.scissor;
+
     VkGraphicsPipelineCreateInfo pipelineInfo{VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO};
     pipelineInfo.stageCount = 2;
     pipelineInfo.pStages = shaderStages;
     pipelineInfo.pVertexInputState = &vertexInputInfo;
     pipelineInfo.pInputAssemblyState = &configInfo.inputAssemblyInfo;
-    pipelineInfo.pViewportState = &configInfo.viewportInfo;
+    pipelineInfo.pViewportState = &viewportInfo;
     pipelineInfo.pRasterizationState = &configInfo.rasterizationInfo;
     pipelineInfo.pMultisampleState = &configInfo.multisampleInfo;
     pipelineInfo.pColorBlendState = &configInfo.colorBlendInfo;
+    pipelineInfo.pDepthStencilState = &configInfo.depthStencilInfo;
     pipelineInfo.pDynamicState = nullptr;
 
     pipelineInfo.layout = configInfo.pipelineLayout;
@@ -89,7 +96,7 @@ void Pipeline::createGraphicsPipeline(const PipelineConfigInfo &configInfo, cons
     pipelineInfo.basePipelineIndex = -1;
     pipelineInfo.basePipelineHandle = VK_NULL_HANDLE;
 
-    if (VK_SUCCESS != vkCreateGraphicsPipelines(device.getDevice(), nullptr, 1, &pipelineInfo, nullptr, &graphicsPipeline)) {
+    if (vkCreateGraphicsPipelines(device.getDevice(), nullptr, 1, &pipelineInfo, nullptr, &graphicsPipeline) != VK_SUCCESS) {
         throw std::runtime_error("Failed to create graphics pipeline");
     }
 }
@@ -99,7 +106,7 @@ void Pipeline::createShaderModule(const std::vector<char> &code, VkShaderModule 
     createInfo.codeSize = code.size();
     createInfo.pCode = reinterpret_cast<const uint32_t *>(code.data());
 
-    if (VK_SUCCESS != vkCreateShaderModule(device.getDevice(), &createInfo, nullptr, shaderModule)) {
+    if (vkCreateShaderModule(device.getDevice(), &createInfo, nullptr, shaderModule) != VK_SUCCESS) {
         throw std::runtime_error("Failed to create shader module");
     }
 }
@@ -119,12 +126,6 @@ PipelineConfigInfo Pipeline::defaultPipelineConfigInfo(uint32_t width, uint32_t 
 
     configInfo.scissor.offset = {0, 0};
     configInfo.scissor.extent = {width, height};
-
-    configInfo.viewportInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_VIEWPORT_STATE_CREATE_INFO;
-    configInfo.viewportInfo.viewportCount = 1;
-    configInfo.viewportInfo.pViewports = &configInfo.viewport;
-    configInfo.viewportInfo.scissorCount = 1;
-    configInfo.viewportInfo.pScissors = &configInfo.scissor;
 
     configInfo.rasterizationInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_STATE_CREATE_INFO;
     configInfo.rasterizationInfo.depthClampEnable = VK_FALSE;
