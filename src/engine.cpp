@@ -113,9 +113,30 @@ void Engine::run() {
         }
 
         drawFrame();
+
+        fps();
     }
 
     vkDeviceWaitIdle(device.getDevice());
 }
 
 void Engine::cleanup() {}
+
+void Engine::fps() {
+    end = clock::now();
+    std::chrono::duration<float> elapsedTime = end - start;
+    bool oneSecond = (std::chrono::duration<double, std::milli>(end - lastUpdateTime).count()) >= 1000.0;
+    start = clock::now();
+    frameCount++;
+    if (oneSecond) {
+        std::stringstream title;
+        title << "FPS:" << std::to_string(frameCount);
+        title << "; CPU Time:" << std::format("{:.2f}", (elapsedTime.count() * 1000.0)) << "ms";
+
+        std::cout << title.str() << std::endl;
+        SDL_SetWindowTitle(window.getSDLWindow(), title.str().c_str());
+
+        frameCount = 0;
+        lastUpdateTime = start;
+    }
+}

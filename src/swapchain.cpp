@@ -11,7 +11,7 @@ Swapchain::Swapchain(Device &deviceRef, VkExtent2D extent) : device{deviceRef}, 
 }
 
 Swapchain::~Swapchain() {
-    for (auto imageView: swapChainImageViews) {
+    for (VkImageView_T *imageView: swapChainImageViews) {
         vkDestroyImageView(device.getDevice(), imageView, nullptr);
     }
     swapChainImageViews.clear();
@@ -27,7 +27,7 @@ Swapchain::~Swapchain() {
         vkFreeMemory(device.getDevice(), depthImageMemories[i], nullptr);
     }
 
-    for (auto framebuffer: swapChainFramebuffers) {
+    for (VkFramebuffer_T *framebuffer: swapChainFramebuffers) {
         vkDestroyFramebuffer(device.getDevice(), framebuffer, nullptr);
     }
 
@@ -90,7 +90,7 @@ VkResult Swapchain::submitCommandBuffers(const VkCommandBuffer *buffers, uint32_
 
     presentInfo.pImageIndices = imageIndex;
 
-    auto result = vkQueuePresentKHR(device.getPresentQueue(), &presentInfo);
+    VkResult result = vkQueuePresentKHR(device.getPresentQueue(), &presentInfo);
 
     currentFrame = (currentFrame + 1) % MAX_FRAMES_IN_FLIGHT;
 
@@ -323,7 +323,7 @@ void Swapchain::createSyncObjects() {
 }
 
 VkSurfaceFormatKHR Swapchain::chooseSwapSurfaceFormat(const std::vector<VkSurfaceFormatKHR> &availableFormats) {
-    for (const auto &availableFormat: availableFormats) {
+    for (const VkSurfaceFormatKHR &availableFormat: availableFormats) {
         if (availableFormat.format == VK_FORMAT_B8G8R8A8_UNORM && availableFormat.colorSpace == VK_COLOR_SPACE_SRGB_NONLINEAR_KHR) {
             return availableFormat;
         }
@@ -333,16 +333,16 @@ VkSurfaceFormatKHR Swapchain::chooseSwapSurfaceFormat(const std::vector<VkSurfac
 }
 
 VkPresentModeKHR Swapchain::chooseSwapPresentMode(const std::vector<VkPresentModeKHR> &availablePresentModes) {
-    for (const auto &availablePresentMode: availablePresentModes) {
-        if (availablePresentMode == VK_PRESENT_MODE_MAILBOX_KHR) {
-            std::cout << "Present mode: Mailbox" << std::endl;
+    for (const VkPresentModeKHR &availablePresentMode: availablePresentModes) {
+        if (availablePresentMode == VK_PRESENT_MODE_IMMEDIATE_KHR) {
+            std::cout << "Present mode: Immediate" << std::endl;
             return availablePresentMode;
         }
     }
 
-    for (const auto &availablePresentMode: availablePresentModes) {
-        if (availablePresentMode == VK_PRESENT_MODE_IMMEDIATE_KHR) {
-            std::cout << "Present mode: Immediate" << std::endl;
+    for (const VkPresentModeKHR &availablePresentMode: availablePresentModes) {
+        if (availablePresentMode == VK_PRESENT_MODE_MAILBOX_KHR) {
+            std::cout << "Present mode: Mailbox" << std::endl;
             return availablePresentMode;
         }
     }
