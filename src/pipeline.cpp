@@ -14,7 +14,7 @@ Pipeline::Pipeline(Device &device, const PipelineConfigInfo &configInfo, const s
 
 Pipeline::~Pipeline() {
     vkDestroyShaderModule(device.getDevice(), vertShaderModule, nullptr);
-    vkDestroyShaderModule(device.getDevice(), vertShaderModule, nullptr);
+    vkDestroyShaderModule(device.getDevice(), fragShaderModule, nullptr);
     vkDestroyPipeline(device.getDevice(), graphicsPipeline, nullptr);
 }
 
@@ -109,6 +109,10 @@ void Pipeline::createShaderModule(const std::vector<char> &code, VkShaderModule 
     if (vkCreateShaderModule(device.getDevice(), &createInfo, nullptr, shaderModule) != VK_SUCCESS) {
         throw std::runtime_error("Failed to create shader module");
     }
+}
+
+void Pipeline::bind(VkCommandBuffer commandBuffer) {
+    vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, graphicsPipeline);
 }
 
 PipelineConfigInfo Pipeline::defaultPipelineConfigInfo(uint32_t width, uint32_t height) {

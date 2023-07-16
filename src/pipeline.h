@@ -25,10 +25,13 @@ class Pipeline {
              const std::string &fragFilePath);
     ~Pipeline();
 
+    void bind(VkCommandBuffer commandBuffer);
+
     static PipelineConfigInfo defaultPipelineConfigInfo(uint32_t width, uint32_t height);
 
   private:
     Device &device;
+
     VkPipeline graphicsPipeline = nullptr;
     VkShaderModule vertShaderModule = nullptr;
     VkShaderModule fragShaderModule = nullptr;

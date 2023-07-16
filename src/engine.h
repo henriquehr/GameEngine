@@ -7,6 +7,7 @@
 
 #include "SDL.h"
 
+#include <array>
 #include <memory>
 #include <stdexcept>
 #include <vector>
