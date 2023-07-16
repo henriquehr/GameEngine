@@ -75,7 +75,7 @@ class Device {
                              VkDeviceMemory &imageMemory);
 
   private:
-    Window window{};
+    Window window;
 
     VkInstance instance = nullptr;
     VkDebugUtilsMessengerEXT debugMessenger = nullptr;

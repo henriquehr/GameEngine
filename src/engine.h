@@ -8,11 +8,15 @@
 
 class Engine {
   private:
-    Window window{};
+    int WIDTH = 1600;
+    int HEIGHT = 900;
 
-    Pipeline pipeline{"../../shaders/compiled/simple.frag.spv", "../../shaders/compiled/simple.vert.spv"};
+    Window window{WIDTH, HEIGHT};
 
     Device device{window};
+
+    Pipeline pipeline{device, Pipeline::defaultPipelineConfigInfo(WIDTH, HEIGHT), "../../shaders/compiled/simple.frag.spv",
+                      "../../shaders/compiled/simple.vert.spv"};
 
   public:
     void init();

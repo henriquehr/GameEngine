@@ -8,7 +8,7 @@
 
 class Window {
   public:
-    Window();
+    Window(int width, int height);
     ~Window();
 
     SDL_Window *getSDLWindow() {
@@ -20,5 +20,5 @@ class Window {
   private:
     SDL_Window *window{};
 
-    void initWindow();
+    void initWindow(int width, int height);
 };
