@@ -19,7 +19,7 @@ add_executable(ashwga
 
 set_target_properties(ashwga PROPERTIES CXX_STANDARD 20 CXX_STANDARD_REQUIRED YES CXX_EXTENSIONS NO)
 
-target_compile_definitions(ashwga PRIVATE GLM_FORCE_XYZW_ONLY GLM_FORCE_QUAT_DATA_XYZW)
+target_compile_definitions(ashwga PRIVATE GLM_FORCE_XYZW_ONLY GLM_FORCE_QUAT_DATA_XYZW GLM_FORCE_RADIANS GLM_FORCE_DEPTH_ZERO_TO_ONE)
 target_compile_definitions(ashwga PRIVATE VK_USE_PLATFORM_WIN32_KHR)
 target_compile_definitions(ashwga PRIVATE WIN32_LEAN_AND_MEAN NOMINMAX)
 

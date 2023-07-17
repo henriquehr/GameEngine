@@ -2,6 +2,7 @@
 #include "engine.h"
 
 Engine::Engine() {
+    loadModels();
     createPipelineLayout();
     createPipeline();
     createCommandBuffers();
@@ -9,6 +10,12 @@ Engine::Engine() {
 
 Engine::~Engine() {
     vkDestroyPipelineLayout(device.getDevice(), pipelineLayout, nullptr);
+}
+
+void Engine::loadModels() {
+    std::vector<Model::Vertex> vertices{{{0.0f, -0.5f}}, {{0.5f, 0.5f}}, {{-0.5f, 0.5f}}};
+
+    model = std::make_unique<Model>(device, vertices);
 }
 
 void Engine::createPipelineLayout() {
@@ -68,7 +75,8 @@ void Engine::createCommandBuffers() {
         vkCmdBeginRenderPass(commandBuffers[i], &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
 
         pipeline->bind(commandBuffers[i]);
-        vkCmdDraw(commandBuffers[i], 3, 1, 0, 0);
+        model->bind(commandBuffers[i]);
+        model->draw(commandBuffers[i]);
 
         vkCmdEndRenderPass(commandBuffers[i]);
         if (vkEndCommandBuffer(commandBuffers[i]) != VK_SUCCESS) {

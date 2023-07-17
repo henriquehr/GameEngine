@@ -1,6 +1,7 @@
 #pragma once
 
 #include "device.h"
+#include "model.h"
 #include "pipeline.h"
 #include "swapchain.h"
 #include "window.h"
@@ -27,9 +28,12 @@ class Engine {
     Device device{window};
     Swapchain swapchain{device, window.getExtent()};
     std::unique_ptr<Pipeline> pipeline{};
+    std::unique_ptr<Model> model{};
 
     VkPipelineLayout pipelineLayout{};
     std::vector<VkCommandBuffer> commandBuffers{};
+
+    void loadModels();
 
     void createPipelineLayout();
 
