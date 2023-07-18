@@ -12,10 +12,32 @@ Engine::~Engine() {
     vkDestroyPipelineLayout(device.getDevice(), pipelineLayout, nullptr);
 }
 
-void Engine::loadModels() {
-    std::vector<Model::Vertex> vertices{{{0.0f, -0.5f}}, {{0.5f, 0.5f}}, {{-0.5f, 0.5f}}};
+void sierpinski(std::vector<Model::Vertex> &vertices, int depth, glm::vec2 left, glm::vec2 right, glm::vec2 top) {
+    if (depth <= 0) {
+        vertices.push_back({top});
+        vertices.push_back({right});
+        vertices.push_back({left});
+    } else {
+        auto leftTop = 0.5f * (left + top);
+        auto rightTop = 0.5f * (right + top);
+        auto leftRight = 0.5f * (left + right);
+        sierpinski(vertices, depth - 1, left, leftRight, leftTop);
+        sierpinski(vertices, depth - 1, leftRight, right, rightTop);
+        sierpinski(vertices, depth - 1, leftTop, rightTop, top);
+    }
+}
 
+void Engine::sierpinskiTriangle() {
+    std::vector<Model::Vertex> vertices{};
+    sierpinski(vertices, 6, {-0.9f, 0.9f}, {0.9f, 0.9f}, {0.0f, -0.9f});
     model = std::make_unique<Model>(device, vertices);
+}
+
+void Engine::loadModels() {
+    sierpinskiTriangle();
+    //    std::vector<Model::Vertex> vertices{{{0.0f, -0.5f}}, {{0.5f, 0.5f}}, {{-0.5f, 0.5f}}};
+    //
+    //    model = std::make_unique<Model>(device, vertices);
 }
 
 void Engine::createPipelineLayout() {

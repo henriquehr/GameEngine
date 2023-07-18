@@ -33,6 +33,8 @@ class Engine {
     VkPipelineLayout pipelineLayout{};
     std::vector<VkCommandBuffer> commandBuffers{};
 
+    void sierpinskiTriangle();
+
     void loadModels();
 
     void createPipelineLayout();
