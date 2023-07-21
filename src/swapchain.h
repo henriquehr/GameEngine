@@ -6,15 +6,17 @@
 
 #include <array>
 #include <iostream>
+#include <memory>
 #include <string>
 #include <vector>
 
-class Swapchain {
+class SwapChain {
   public:
     static constexpr int MAX_FRAMES_IN_FLIGHT = 2;
 
-    Swapchain(Device &deviceRef, VkExtent2D windowExtent);
-    ~Swapchain();
+    SwapChain(Device &device, VkExtent2D extent);
+    SwapChain(Device &device, VkExtent2D windowExtent, std::shared_ptr<SwapChain> previous);
+    ~SwapChain();
 
     VkFramebuffer getFrameBuffer(int index) {
         return swapChainFramebuffers[index];
@@ -69,11 +71,14 @@ class Swapchain {
     VkExtent2D windowExtent{};
 
     VkSwapchainKHR swapChain = nullptr;
+    std::shared_ptr<SwapChain> oldSwapChain;
 
     std::vector<VkSemaphore> imageAvailableSemaphores{};
     std::vector<VkSemaphore> renderFinishedSemaphores{};
     std::vector<VkFence> inFlightFences{};
     std::vector<VkFence> imagesInFlight{};
+
+    void init();
 
     void createSwapChain();
 

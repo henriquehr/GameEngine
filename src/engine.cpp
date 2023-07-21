@@ -4,7 +4,7 @@
 Engine::Engine() {
     loadModels();
     createPipelineLayout();
-    createPipeline();
+    recreateSwapChain();
     createCommandBuffers();
 }
 
@@ -14,9 +14,9 @@ Engine::~Engine() {
 
 void sierpinski(std::vector<Model::Vertex> &vertices, int depth, glm::vec2 left, glm::vec2 right, glm::vec2 top) {
     if (depth <= 0) {
-        vertices.push_back({top});
-        vertices.push_back({right});
-        vertices.push_back({left});
+        vertices.push_back({top, {1.0f, 0.0f, 0.0f}});
+        vertices.push_back({right, {0.0f, 1.0f, 0.0f}});
+        vertices.push_back({left, {0.0f, 0.0f, 1.0f}});
     } else {
         auto leftTop = 0.5f * (left + top);
         auto rightTop = 0.5f * (right + top);
@@ -35,7 +35,9 @@ void Engine::sierpinskiTriangle() {
 
 void Engine::loadModels() {
     sierpinskiTriangle();
-    //    std::vector<Model::Vertex> vertices{{{0.0f, -0.5f}}, {{0.5f, 0.5f}}, {{-0.5f, 0.5f}}};
+    //    std::vector<Model::Vertex> vertices{{{0.0f, -0.5f}, {1.0f, 0.0f, 0.0f}},
+    //                                        {{0.5f, 0.5f}, {0.0f, 1.0f, 0.0f}},
+    //                                        {{-0.5f, 0.5f}, {0.0f, 0.0f, 1.0f}}};
     //
     //    model = std::make_unique<Model>(device, vertices);
 }
@@ -53,16 +55,41 @@ void Engine::createPipelineLayout() {
 }
 
 void Engine::createPipeline() {
-    PipelineConfigInfo pipelineConfig = Pipeline::defaultPipelineConfigInfo(swapchain.getWidth(), swapchain.getHeight());
-    pipelineConfig.renderPass = swapchain.getRenderPass();
+    assert(swapChain != nullptr && "Cannot create pipeline before swap chain");
+    assert(pipelineLayout != nullptr && "Cannot create pipeline before pipeline layout");
+
+    PipelineConfigInfo pipelineConfig{};
+    Pipeline::defaultPipelineConfigInfo(pipelineConfig);
+    pipelineConfig.renderPass = swapChain->getRenderPass();
     pipelineConfig.pipelineLayout = pipelineLayout;
 
     pipeline = std::make_unique<Pipeline>(device, pipelineConfig, "../../shaders/compiled/simple.vert.spv",
                                           "../../shaders/compiled/simple.frag.spv");
 }
 
+void Engine::recreateSwapChain() {
+    VkExtent2D extent = window.getExtent();
+    SDL_Event e;
+    while (extent.width == 0 || extent.height == 0) {
+        extent = window.getExtent();
+        SDL_WaitEvent(&e);
+    }
+    vkDeviceWaitIdle(device.getDevice());
+
+    if (swapChain == nullptr) {
+        swapChain = std::make_unique<SwapChain>(device, extent);
+    } else {
+        swapChain = std::make_unique<SwapChain>(device, extent, std::move(swapChain));
+        if (swapChain->getImageCount() != commandBuffers.size()) {
+            freeCommandBuffers();
+            createCommandBuffers();
+        }
+    }
+    createPipeline();
+}
+
 void Engine::createCommandBuffers() {
-    commandBuffers.resize(swapchain.getImageCount());
+    commandBuffers.resize(swapChain->getImageCount());
 
     VkCommandBufferAllocateInfo allocateInfo{VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO};
     allocateInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
@@ -72,50 +99,77 @@ void Engine::createCommandBuffers() {
     if (vkAllocateCommandBuffers(device.getDevice(), &allocateInfo, commandBuffers.data()) != VK_SUCCESS) {
         throw std::runtime_error("Failed to allocate command buffers");
     }
+}
 
-    for (int i = 0; i < commandBuffers.size(); i++) {
-        VkCommandBufferBeginInfo beginInfo{VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO};
+void Engine::freeCommandBuffers() {
+    vkFreeCommandBuffers(device.getDevice(), device.getCommandPool(), static_cast<uint32_t>(commandBuffers.size()), commandBuffers.data());
+    commandBuffers.clear();
+}
 
-        if (vkBeginCommandBuffer(commandBuffers[i], &beginInfo) != VK_SUCCESS) {
-            throw std::runtime_error("Failed to being recording command buffer");
-        }
+void Engine::recordCommandBuffer(int imageIndex) {
+    VkCommandBufferBeginInfo beginInfo{VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO};
 
-        VkRenderPassBeginInfo renderPassInfo{VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO};
-        renderPassInfo.renderPass = swapchain.getRenderPass();
-        renderPassInfo.framebuffer = swapchain.getFrameBuffer(i);
+    if (vkBeginCommandBuffer(commandBuffers[imageIndex], &beginInfo) != VK_SUCCESS) {
+        throw std::runtime_error("Failed to being recording command buffer");
+    }
 
-        renderPassInfo.renderArea.offset = {0, 0};
-        renderPassInfo.renderArea.extent = swapchain.getSwapChainExtent();
+    VkRenderPassBeginInfo renderPassInfo{VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO};
+    renderPassInfo.renderPass = swapChain->getRenderPass();
+    renderPassInfo.framebuffer = swapChain->getFrameBuffer(imageIndex);
 
-        std::array<VkClearValue, 2> clearValues{};
-        clearValues[0].color = {0.1f, 0.1f, 0.1f, 1.0f};
-        clearValues[1].depthStencil = {1.0f, 0};
+    renderPassInfo.renderArea.offset = {0, 0};
+    renderPassInfo.renderArea.extent = swapChain->getSwapChainExtent();
 
-        renderPassInfo.clearValueCount = static_cast<uint32_t>(clearValues.size());
-        renderPassInfo.pClearValues = clearValues.data();
+    std::array<VkClearValue, 2> clearValues{};
+    clearValues[0].color = {0.1f, 0.1f, 0.1f, 1.0f};
+    clearValues[1].depthStencil = {1.0f, 0};
 
-        vkCmdBeginRenderPass(commandBuffers[i], &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
+    renderPassInfo.clearValueCount = static_cast<uint32_t>(clearValues.size());
+    renderPassInfo.pClearValues = clearValues.data();
 
-        pipeline->bind(commandBuffers[i]);
-        model->bind(commandBuffers[i]);
-        model->draw(commandBuffers[i]);
+    vkCmdBeginRenderPass(commandBuffers[imageIndex], &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
 
-        vkCmdEndRenderPass(commandBuffers[i]);
-        if (vkEndCommandBuffer(commandBuffers[i]) != VK_SUCCESS) {
-            throw std::runtime_error("Failed to record command buffer");
-        }
+    VkViewport viewport{};
+    viewport.x = 0.0f;
+    viewport.y = 0.0f;
+    viewport.width = static_cast<float>(swapChain->getSwapChainExtent().width);
+    viewport.height = static_cast<float>(swapChain->getSwapChainExtent().height);
+    viewport.minDepth = 0.0f;
+    viewport.maxDepth = 1.0f;
+    VkRect2D scissor{{0, 0}, swapChain->getSwapChainExtent()};
+    vkCmdSetViewport(commandBuffers[imageIndex], 0, 1, &viewport);
+    vkCmdSetScissor(commandBuffers[imageIndex], 0, 1, &scissor);
+
+    pipeline->bind(commandBuffers[imageIndex]);
+    model->bind(commandBuffers[imageIndex]);
+    model->draw(commandBuffers[imageIndex]);
+
+    vkCmdEndRenderPass(commandBuffers[imageIndex]);
+    if (vkEndCommandBuffer(commandBuffers[imageIndex]) != VK_SUCCESS) {
+        throw std::runtime_error("Failed to record command buffer");
     }
 }
 
 void Engine::drawFrame() {
     uint32_t imageIndex;
-    VkResult result = swapchain.acquireNextImage(&imageIndex);
+    VkResult result = swapChain->acquireNextImage(&imageIndex);
+
+    if (result == VK_ERROR_OUT_OF_DATE_KHR) {
+        recreateSwapChain();
+        return;
+    }
+
     if (result != VK_SUCCESS && result != VK_SUBOPTIMAL_KHR) {
         throw std::runtime_error("Failed to acquire swapchain image");
     }
 
-    result = swapchain.submitCommandBuffers(&commandBuffers[imageIndex], &imageIndex);
-    if (result != VK_SUCCESS) {
+    recordCommandBuffer(imageIndex);
+    result = swapChain->submitCommandBuffers(&commandBuffers[imageIndex], &imageIndex);
+    if (result == VK_ERROR_OUT_OF_DATE_KHR || result == VK_SUBOPTIMAL_KHR || window.wasWindowResized()) {
+        window.resetWindowResizedFlag();
+        recreateSwapChain();
+        return;
+    } else if (result != VK_SUCCESS) {
         throw std::runtime_error("Failed to present swapchain image");
     }
 }
@@ -135,6 +189,11 @@ void Engine::run() {
                         quit = true;
                         break;
                 }
+            } else if (e.type == SDL_WINDOWEVENT && e.window.event == SDL_WINDOWEVENT_RESIZED &&
+                       e.window.windowID == SDL_GetWindowID(window.getSDLWindow())) {
+                window.setFramebufferResized();
+                window.setWidth(e.window.data1);
+                window.setHeight(e.window.data2);
             }
         }
         // Check if window is minimized and skip drawing

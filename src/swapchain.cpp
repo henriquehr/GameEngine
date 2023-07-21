@@ -1,7 +1,18 @@
 
 #include "swapchain.h"
 
-Swapchain::Swapchain(Device &deviceRef, VkExtent2D extent) : device{deviceRef}, windowExtent{extent} {
+SwapChain::SwapChain(Device &device, VkExtent2D extent) : device{device}, windowExtent{extent} {
+    init();
+}
+
+SwapChain::SwapChain(Device &device, VkExtent2D extent, std::shared_ptr<SwapChain> previous)
+    : device(device), windowExtent(extent), oldSwapChain(previous) {
+
+    init();
+    oldSwapChain = nullptr;
+}
+
+void SwapChain::init() {
     createSwapChain();
     createImageViews();
     createRenderPass();
@@ -10,7 +21,7 @@ Swapchain::Swapchain(Device &deviceRef, VkExtent2D extent) : device{deviceRef}, 
     createSyncObjects();
 }
 
-Swapchain::~Swapchain() {
+SwapChain::~SwapChain() {
     for (VkImageView_T *imageView: swapChainImageViews) {
         vkDestroyImageView(device.getDevice(), imageView, nullptr);
     }
@@ -41,7 +52,7 @@ Swapchain::~Swapchain() {
     }
 }
 
-VkResult Swapchain::acquireNextImage(uint32_t *imageIndex) {
+VkResult SwapChain::acquireNextImage(uint32_t *imageIndex) {
     vkWaitForFences(device.getDevice(), 1, &inFlightFences[currentFrame], VK_TRUE, std::numeric_limits<uint64_t>::max());
 
     VkResult result = vkAcquireNextImageKHR(device.getDevice(), swapChain, std::numeric_limits<uint64_t>::max(),
@@ -51,7 +62,7 @@ VkResult Swapchain::acquireNextImage(uint32_t *imageIndex) {
     return result;
 }
 
-VkResult Swapchain::submitCommandBuffers(const VkCommandBuffer *buffers, uint32_t *imageIndex) {
+VkResult SwapChain::submitCommandBuffers(const VkCommandBuffer *buffers, uint32_t *imageIndex) {
     if (imagesInFlight[*imageIndex] != VK_NULL_HANDLE) {
         vkWaitForFences(device.getDevice(), 1, &imagesInFlight[*imageIndex], VK_TRUE, UINT64_MAX);
     }
@@ -97,7 +108,7 @@ VkResult Swapchain::submitCommandBuffers(const VkCommandBuffer *buffers, uint32_
     return result;
 }
 
-void Swapchain::createSwapChain() {
+void SwapChain::createSwapChain() {
     SwapChainSupportDetails swapChainSupport = device.getSwapChainSupport();
 
     VkSurfaceFormatKHR surfaceFormat = chooseSwapSurfaceFormat(swapChainSupport.formats);
@@ -139,7 +150,9 @@ void Swapchain::createSwapChain() {
     createInfo.presentMode = presentMode;
     createInfo.clipped = VK_TRUE;
 
-    createInfo.oldSwapchain = VK_NULL_HANDLE;
+    //    createInfo.oldSwapchain = VK_NULL_HANDLE;
+
+    createInfo.oldSwapchain = oldSwapChain == nullptr ? VK_NULL_HANDLE : oldSwapChain->swapChain;
 
     if (vkCreateSwapchainKHR(device.getDevice(), &createInfo, nullptr, &swapChain) != VK_SUCCESS) {
         throw std::runtime_error("Failed to create swap chain");
@@ -157,7 +170,7 @@ void Swapchain::createSwapChain() {
     swapChainExtent = extent;
 }
 
-void Swapchain::createImageViews() {
+void SwapChain::createImageViews() {
     swapChainImageViews.resize(swapChainImages.size());
     for (size_t i = 0; i < swapChainImages.size(); i++) {
         VkImageViewCreateInfo viewInfo{};
@@ -177,7 +190,7 @@ void Swapchain::createImageViews() {
     }
 }
 
-void Swapchain::createRenderPass() {
+void SwapChain::createRenderPass() {
     VkAttachmentDescription depthAttachment{};
     depthAttachment.format = findDepthFormat();
     depthAttachment.samples = VK_SAMPLE_COUNT_1_BIT;
@@ -235,7 +248,7 @@ void Swapchain::createRenderPass() {
     }
 }
 
-void Swapchain::createFramebuffers() {
+void SwapChain::createFramebuffers() {
     swapChainFramebuffers.resize(getImageCount());
     for (size_t i = 0; i < getImageCount(); i++) {
         std::array<VkImageView, 2> attachments = {swapChainImageViews[i], depthImageViews[i]};
@@ -256,7 +269,7 @@ void Swapchain::createFramebuffers() {
     }
 }
 
-void Swapchain::createDepthResources() {
+void SwapChain::createDepthResources() {
     VkFormat depthFormat = findDepthFormat();
     VkExtent2D swapChainExtent = getSwapChainExtent();
 
@@ -300,7 +313,7 @@ void Swapchain::createDepthResources() {
     }
 }
 
-void Swapchain::createSyncObjects() {
+void SwapChain::createSyncObjects() {
     imageAvailableSemaphores.resize(MAX_FRAMES_IN_FLIGHT);
     renderFinishedSemaphores.resize(MAX_FRAMES_IN_FLIGHT);
     inFlightFences.resize(MAX_FRAMES_IN_FLIGHT);
@@ -322,9 +335,9 @@ void Swapchain::createSyncObjects() {
     }
 }
 
-VkSurfaceFormatKHR Swapchain::chooseSwapSurfaceFormat(const std::vector<VkSurfaceFormatKHR> &availableFormats) {
+VkSurfaceFormatKHR SwapChain::chooseSwapSurfaceFormat(const std::vector<VkSurfaceFormatKHR> &availableFormats) {
     for (const VkSurfaceFormatKHR &availableFormat: availableFormats) {
-        if (availableFormat.format == VK_FORMAT_B8G8R8A8_UNORM && availableFormat.colorSpace == VK_COLOR_SPACE_SRGB_NONLINEAR_KHR) {
+        if (availableFormat.format == VK_FORMAT_B8G8R8A8_SRGB && availableFormat.colorSpace == VK_COLOR_SPACE_SRGB_NONLINEAR_KHR) {
             return availableFormat;
         }
     }
@@ -332,7 +345,7 @@ VkSurfaceFormatKHR Swapchain::chooseSwapSurfaceFormat(const std::vector<VkSurfac
     return availableFormats[0];
 }
 
-VkPresentModeKHR Swapchain::chooseSwapPresentMode(const std::vector<VkPresentModeKHR> &availablePresentModes) {
+VkPresentModeKHR SwapChain::chooseSwapPresentMode(const std::vector<VkPresentModeKHR> &availablePresentModes) {
     for (const VkPresentModeKHR &availablePresentMode: availablePresentModes) {
         if (availablePresentMode == VK_PRESENT_MODE_IMMEDIATE_KHR) {
             std::cout << "Present mode: Immediate" << std::endl;
@@ -351,7 +364,7 @@ VkPresentModeKHR Swapchain::chooseSwapPresentMode(const std::vector<VkPresentMod
     return VK_PRESENT_MODE_FIFO_KHR;
 }
 
-VkExtent2D Swapchain::chooseSwapExtent(const VkSurfaceCapabilitiesKHR &capabilities) {
+VkExtent2D SwapChain::chooseSwapExtent(const VkSurfaceCapabilitiesKHR &capabilities) {
     if (capabilities.currentExtent.width != std::numeric_limits<uint32_t>::max()) {
         return capabilities.currentExtent;
     } else {
@@ -364,7 +377,7 @@ VkExtent2D Swapchain::chooseSwapExtent(const VkSurfaceCapabilitiesKHR &capabilit
     }
 }
 
-VkFormat Swapchain::findDepthFormat() {
+VkFormat SwapChain::findDepthFormat() {
     return device.findSupportedFormat({VK_FORMAT_D32_SFLOAT, VK_FORMAT_D32_SFLOAT_S8_UINT, VK_FORMAT_D24_UNORM_S8_UINT},
                                       VK_IMAGE_TILING_OPTIMAL, VK_FORMAT_FEATURE_DEPTH_STENCIL_ATTACHMENT_BIT);
 }

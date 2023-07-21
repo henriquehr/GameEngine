@@ -26,7 +26,7 @@ class Engine {
 
     Window window{WIDTH, HEIGHT};
     Device device{window};
-    Swapchain swapchain{device, window.getExtent()};
+    std::unique_ptr<SwapChain> swapChain{};
     std::unique_ptr<Pipeline> pipeline{};
     std::unique_ptr<Model> model{};
 
@@ -43,7 +43,13 @@ class Engine {
 
     void createCommandBuffers();
 
+    void freeCommandBuffers();
+
     void drawFrame();
+
+    void recreateSwapChain();
+
+    void recordCommandBuffer(int imageIndex);
 
   public:
     void init();
