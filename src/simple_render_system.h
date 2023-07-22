@@ -2,10 +2,8 @@
 
 #include "device.h"
 #include "game_object.h"
-#include "model.h"
 #include "pipeline.h"
 
-#include <SDL.h>
 #include <glm/glm.hpp>
 #include <glm/gtc/constants.hpp>
 

@@ -2,9 +2,14 @@
 
 #include "window.h"
 
+#include "SDL_vulkan.h"
 #include "vulkan/vulkan.h"
 
+#include <iostream>
+#include <set>
+#include <stdexcept>
 #include <string>
+#include <unordered_set>
 #include <vector>
 
 struct SwapChainSupportDetails {

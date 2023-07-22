@@ -1,11 +1,6 @@
 
 #include "pipeline.h"
 
-#include <cassert>
-#include <fstream>
-#include <iostream>
-#include <stdexcept>
-
 Pipeline::Pipeline(Device &device, const PipelineConfigInfo &configInfo, const std::string &vertFilePath, const std::string &fragFilePath)
     : device(device) {
 

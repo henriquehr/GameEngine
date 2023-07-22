@@ -1,13 +1,6 @@
 
 #include "device.h"
 
-#include "SDL_vulkan.h"
-
-#include <iostream>
-#include <set>
-#include <stdexcept>
-#include <unordered_set>
-
 static VKAPI_ATTR VkBool32 VKAPI_CALL debugCallback(VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity,
                                                     VkDebugUtilsMessageTypeFlagsEXT messageType,
                                                     const VkDebugUtilsMessengerCallbackDataEXT *pCallbackData, void *pUserData) {

@@ -27,9 +27,9 @@ class Model {
   private:
     Device &device;
 
-    VkBuffer vertexBuffer;
-    VkDeviceMemory vertexBufferMemory;
-    uint32_t vertexCount;
+    VkBuffer vertexBuffer{};
+    VkDeviceMemory vertexBufferMemory{};
+    uint32_t vertexCount{};
 
     void createVertexBuffer(const std::vector<Vertex> &vertices);
 };
