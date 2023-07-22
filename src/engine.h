@@ -3,18 +3,16 @@
 #include "device.h"
 #include "game_object.h"
 #include "model.h"
-#include "pipeline.h"
 #include "renderer.h"
+#include "simple_render_system.h"
 #include "window.h"
 
 #include <SDL.h>
 #include <glm/glm.hpp>
 #include <glm/gtc/constants.hpp>
 
-#include <array>
 #include <chrono>
 #include <memory>
-#include <sstream>
 #include <stdexcept>
 #include <vector>
 
@@ -30,20 +28,11 @@ class Engine {
     Window window{WIDTH, HEIGHT};
     Device device{window};
     Renderer renderer{window, device};
-    std::unique_ptr<Pipeline> pipeline = nullptr;
     std::vector<GameObject> gameObjects{};
-
-    VkPipelineLayout pipelineLayout{};
 
     void sierpinskiTriangle();
 
     void loadGameObjects();
-
-    void createPipelineLayout();
-
-    void createPipeline();
-
-    void renderGameObjects(VkCommandBuffer commandBuffer);
 
   public:
     void run();

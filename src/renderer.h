@@ -5,16 +5,13 @@
 #include "swapchain.h"
 #include "window.h"
 
-#include <SDL.h>
-
 #include <array>
 #include <cassert>
-#include <chrono>
 #include <memory>
-#include <sstream>
 #include <stdexcept>
 #include <vector>
 
+// swapchain, command buffers, and drawing
 class Renderer {
   public:
     Renderer(Window &window, Device &device);
@@ -30,7 +27,12 @@ class Renderer {
 
     VkCommandBuffer getCurrentCommandBuffer() {
         assert(isFrameStarted && "Cannot get command buffer when frame not in progress");
-        return commandBuffers[currentImageIndex];
+        return commandBuffers[currentFrameIndex];
+    }
+
+    int getFrameIndex() const {
+        assert(isFrameStarted && "Cannot get frame index when frame not in progress");
+        return currentFrameIndex;
     }
 
     VkCommandBuffer beginFrame();
@@ -46,6 +48,7 @@ class Renderer {
     std::vector<VkCommandBuffer> commandBuffers{};
 
     uint32_t currentImageIndex = 0;
+    int currentFrameIndex = 0;
     bool isFrameStarted = false;
 
     void createCommandBuffers();
