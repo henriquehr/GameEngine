@@ -1,6 +1,7 @@
 #pragma once
 
 #include "device.h"
+#include "model.h"
 
 #include <cassert>
 #include <fstream>
@@ -29,6 +30,9 @@ class Pipeline {
     Pipeline(Device &device, const PipelineConfigInfo &pipelineConfigInfo, const std::string &vertFilePath,
              const std::string &fragFilePath);
     ~Pipeline();
+
+    Pipeline(const Pipeline &) = delete;
+    Pipeline &operator=(const Pipeline &) = delete;
 
     void bind(VkCommandBuffer commandBuffer);
 

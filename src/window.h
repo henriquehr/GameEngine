@@ -11,6 +11,9 @@ class Window {
     Window(int width, int height);
     ~Window();
 
+    Window(const Window &) = delete;
+    Window &operator=(const Window &) = delete;
+
     SDL_Window *getSDLWindow() {
         return window;
     }

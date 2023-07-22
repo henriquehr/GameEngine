@@ -15,10 +15,13 @@ class SimpleRenderSystem {
     SimpleRenderSystem(Device &device, VkRenderPass renderPass);
     ~SimpleRenderSystem();
 
+    SimpleRenderSystem(const SimpleRenderSystem &) = delete;
+    SimpleRenderSystem &operator=(const SimpleRenderSystem &) = delete;
+
     void renderGameObjects(VkCommandBuffer commandBuffer, std::vector<GameObject> &gameObjects);
 
   private:
-    Device device;
+    Device &device;
     std::unique_ptr<Pipeline> pipeline = nullptr;
     VkPipelineLayout pipelineLayout{};
 

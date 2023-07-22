@@ -17,6 +17,9 @@ class SwapChain {
     SwapChain(Device &device, VkExtent2D windowExtent, std::shared_ptr<SwapChain> previous);
     ~SwapChain();
 
+    SwapChain(const SwapChain &) = delete;
+    SwapChain &operator=(const SwapChain &) = delete;
+
     VkFramebuffer getFrameBuffer(int index) {
         return swapChainFramebuffers[index];
     }

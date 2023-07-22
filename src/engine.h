@@ -21,6 +21,9 @@ class Engine {
     Engine();
     ~Engine();
 
+    Engine(const Engine &) = delete;
+    Engine &operator=(const Engine &) = delete;
+
   private:
     int WIDTH = 1600;
     int HEIGHT = 900;

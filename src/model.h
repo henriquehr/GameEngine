@@ -20,6 +20,9 @@ class Model {
     Model(Device &device, const std::vector<Vertex> &vertices);
     ~Model();
 
+    Model(const Model &) = delete;
+    Model &operator=(const Model &) = delete;
+
     void bind(VkCommandBuffer commandBuffer);
 
     void draw(VkCommandBuffer commandBuffer);

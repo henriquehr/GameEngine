@@ -20,6 +20,11 @@ struct Transform2DComponent {
 
 class GameObject {
   public:
+    GameObject(const GameObject &) = delete;
+    GameObject &operator=(const GameObject &) = delete;
+    GameObject(GameObject &&) = default;
+    GameObject &operator=(GameObject &&) = default;
+
     using id_t = unsigned int;
 
     std::shared_ptr<Model> model{};

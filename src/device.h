@@ -41,6 +41,9 @@ class Device {
     Device(Window &window);
     ~Device();
 
+    Device(const Device &) = delete;
+    Device &operator=(const Device &) = delete;
+
     VkCommandPool getCommandPool() {
         return commandPool;
     }
@@ -80,7 +83,7 @@ class Device {
                              VkDeviceMemory &imageMemory);
 
   private:
-    Window window;
+    Window &window;
 
     VkInstance instance = nullptr;
     VkDebugUtilsMessengerEXT debugMessenger = nullptr;
