@@ -1,5 +1,6 @@
 #pragma once
 
+#include "camera.h"
 #include "device.h"
 #include "game_object.h"
 #include "model.h"
@@ -32,8 +33,7 @@ class Engine {
     Device device{window};
     Renderer renderer{window, device};
     std::vector<GameObject> gameObjects{};
-
-    void sierpinskiTriangle();
+    std::vector<GameObject> gameObjectsOrtho{};
 
     void loadGameObjects();
 

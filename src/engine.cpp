@@ -70,14 +70,23 @@ void Engine::loadGameObjects() {
 
     GameObject cube = GameObject::createGameObject();
     cube.model = model;
-    cube.transform.translation = {0.0f, 0.0f, 0.5f};
+    cube.transform.translation = {-0.5f, 0.0f, 2.5f};
     cube.transform.scale = {0.5f, 0.5f, 0.5f};
 
     gameObjects.push_back(std::move(cube));
+
+    GameObject cubeOrtho = GameObject::createGameObject();
+    cubeOrtho.model = model;
+    cubeOrtho.transform.translation = {0.5f, 0.0f, 0.5f};
+    cubeOrtho.transform.scale = {0.5f, 0.5f, 0.5f};
+
+    gameObjectsOrtho.push_back(std::move(cubeOrtho));
 }
 
 void Engine::run() {
     SimpleRenderSystem simpleRenderSystem{device, renderer.getSwapChainRenderPass()};
+    Camera camera{};
+    Camera cameraOrtho{};
 
     bool quit = false;
     SDL_Event e;
@@ -103,9 +112,14 @@ void Engine::run() {
             continue;
         }
 
+        float aspect = renderer.getAspectRatio();
+        cameraOrtho.setOrthographicProjection(-aspect, aspect, -1, 1, -1, 1);
+        camera.setPerspectiveProjection(glm::radians(50.0f), aspect, 0.1f, 10.0f);
+
         if (VkCommandBuffer commandBuffer = renderer.beginFrame()) {
             renderer.beginSwapChainRenderPass(commandBuffer);
-            simpleRenderSystem.renderGameObjects(commandBuffer, gameObjects);
+            simpleRenderSystem.renderGameObjects(commandBuffer, gameObjects, camera);
+            simpleRenderSystem.renderGameObjects(commandBuffer, gameObjectsOrtho, cameraOrtho);
             renderer.endSwapChainRenderPass(commandBuffer);
             renderer.endFrame();
         }

@@ -1,5 +1,6 @@
 #pragma once
 
+#include "camera.h"
 #include "device.h"
 #include "game_object.h"
 #include "pipeline.h"
@@ -18,7 +19,7 @@ class SimpleRenderSystem {
     SimpleRenderSystem(const SimpleRenderSystem &) = delete;
     SimpleRenderSystem &operator=(const SimpleRenderSystem &) = delete;
 
-    void renderGameObjects(VkCommandBuffer commandBuffer, std::vector<GameObject> &gameObjects);
+    void renderGameObjects(VkCommandBuffer commandBuffer, std::vector<GameObject> &gameObjects, const Camera &camera);
 
   private:
     Device &device;
