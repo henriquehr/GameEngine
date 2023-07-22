@@ -1,6 +1,7 @@
 #pragma once
 
 #include "device.h"
+#include "game_object.h"
 #include "model.h"
 #include "pipeline.h"
 #include "swapchain.h"
@@ -8,6 +9,7 @@
 
 #include <SDL.h>
 #include <glm/glm.hpp>
+#include <glm/gtc/constants.hpp>
 
 #include <array>
 #include <chrono>
@@ -29,14 +31,14 @@ class Engine {
     Device device{window};
     std::unique_ptr<SwapChain> swapChain = nullptr;
     std::unique_ptr<Pipeline> pipeline = nullptr;
-    std::unique_ptr<Model> model = nullptr;
+    std::vector<GameObject> gameObjects{};
 
     VkPipelineLayout pipelineLayout{};
     std::vector<VkCommandBuffer> commandBuffers{};
 
     void sierpinskiTriangle();
 
-    void loadModels();
+    void loadGameObjects();
 
     void createPipelineLayout();
 
@@ -51,6 +53,8 @@ class Engine {
     void recreateSwapChain();
 
     void recordCommandBuffer(int imageIndex);
+
+    void renderGameObjects(VkCommandBuffer commandBuffer);
 
   public:
     void init();
