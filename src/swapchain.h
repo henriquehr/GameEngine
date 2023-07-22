@@ -71,7 +71,7 @@ class SwapChain {
     VkExtent2D windowExtent{};
 
     VkSwapchainKHR swapChain = nullptr;
-    std::shared_ptr<SwapChain> oldSwapChain;
+    std::shared_ptr<SwapChain> oldSwapChain = nullptr;
 
     std::vector<VkSemaphore> imageAvailableSemaphores{};
     std::vector<VkSemaphore> renderFinishedSemaphores{};

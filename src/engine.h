@@ -6,7 +6,8 @@
 #include "swapchain.h"
 #include "window.h"
 
-#include "SDL.h"
+#include <SDL.h>
+#include <glm/glm.hpp>
 
 #include <array>
 #include <chrono>
@@ -26,9 +27,9 @@ class Engine {
 
     Window window{WIDTH, HEIGHT};
     Device device{window};
-    std::unique_ptr<SwapChain> swapChain{};
-    std::unique_ptr<Pipeline> pipeline{};
-    std::unique_ptr<Model> model{};
+    std::unique_ptr<SwapChain> swapChain = nullptr;
+    std::unique_ptr<Pipeline> pipeline = nullptr;
+    std::unique_ptr<Model> model = nullptr;
 
     VkPipelineLayout pipelineLayout{};
     std::vector<VkCommandBuffer> commandBuffers{};
