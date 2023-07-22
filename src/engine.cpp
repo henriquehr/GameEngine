@@ -10,8 +10,7 @@ struct SimplePushConstantData {
 Engine::Engine() {
     loadGameObjects();
     createPipelineLayout();
-    recreateSwapChain();
-    createCommandBuffers();
+    createPipeline();
 }
 
 Engine::~Engine() {
@@ -85,97 +84,15 @@ void Engine::createPipelineLayout() {
 }
 
 void Engine::createPipeline() {
-    assert(swapChain != nullptr && "Cannot create pipeline before swap chain");
     assert(pipelineLayout != nullptr && "Cannot create pipeline before pipeline layout");
 
     PipelineConfigInfo pipelineConfig{};
     Pipeline::defaultPipelineConfigInfo(pipelineConfig);
-    pipelineConfig.renderPass = swapChain->getRenderPass();
+    pipelineConfig.renderPass = renderer.getSwapChainRenderPass();
     pipelineConfig.pipelineLayout = pipelineLayout;
 
     pipeline = std::make_unique<Pipeline>(device, pipelineConfig, "../../shaders/compiled/simple.vert.spv",
                                           "../../shaders/compiled/simple.frag.spv");
-}
-
-void Engine::recreateSwapChain() {
-    VkExtent2D extent = window.getExtent();
-    SDL_Event e;
-    while (extent.width == 0 || extent.height == 0) {
-        extent = window.getExtent();
-        SDL_WaitEvent(&e);
-    }
-    vkDeviceWaitIdle(device.getDevice());
-
-    if (swapChain == nullptr) {
-        swapChain = std::make_unique<SwapChain>(device, extent);
-    } else {
-        swapChain = std::make_unique<SwapChain>(device, extent, std::move(swapChain));
-        if (swapChain->getImageCount() != commandBuffers.size()) {
-            freeCommandBuffers();
-            createCommandBuffers();
-        }
-    }
-    createPipeline();
-}
-
-void Engine::createCommandBuffers() {
-    commandBuffers.resize(swapChain->getImageCount());
-
-    VkCommandBufferAllocateInfo allocateInfo{VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO};
-    allocateInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
-    allocateInfo.commandPool = device.getCommandPool();
-    allocateInfo.commandBufferCount = static_cast<uint32_t>(commandBuffers.size());
-
-    if (vkAllocateCommandBuffers(device.getDevice(), &allocateInfo, commandBuffers.data()) != VK_SUCCESS) {
-        throw std::runtime_error("Failed to allocate command buffers");
-    }
-}
-
-void Engine::freeCommandBuffers() {
-    vkFreeCommandBuffers(device.getDevice(), device.getCommandPool(), static_cast<uint32_t>(commandBuffers.size()), commandBuffers.data());
-    commandBuffers.clear();
-}
-
-void Engine::recordCommandBuffer(int imageIndex) {
-    VkCommandBufferBeginInfo beginInfo{VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO};
-
-    if (vkBeginCommandBuffer(commandBuffers[imageIndex], &beginInfo) != VK_SUCCESS) {
-        throw std::runtime_error("Failed to being recording command buffer");
-    }
-
-    VkRenderPassBeginInfo renderPassInfo{VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO};
-    renderPassInfo.renderPass = swapChain->getRenderPass();
-    renderPassInfo.framebuffer = swapChain->getFrameBuffer(imageIndex);
-
-    renderPassInfo.renderArea.offset = {0, 0};
-    renderPassInfo.renderArea.extent = swapChain->getSwapChainExtent();
-
-    std::array<VkClearValue, 2> clearValues{};
-    clearValues[0].color = {0.01f, 0.01f, 0.01f, 1.0f};
-    clearValues[1].depthStencil = {1.0f, 0};
-
-    renderPassInfo.clearValueCount = static_cast<uint32_t>(clearValues.size());
-    renderPassInfo.pClearValues = clearValues.data();
-
-    vkCmdBeginRenderPass(commandBuffers[imageIndex], &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
-
-    VkViewport viewport{};
-    viewport.x = 0.0f;
-    viewport.y = 0.0f;
-    viewport.width = static_cast<float>(swapChain->getSwapChainExtent().width);
-    viewport.height = static_cast<float>(swapChain->getSwapChainExtent().height);
-    viewport.minDepth = 0.0f;
-    viewport.maxDepth = 1.0f;
-    VkRect2D scissor{{0, 0}, swapChain->getSwapChainExtent()};
-    vkCmdSetViewport(commandBuffers[imageIndex], 0, 1, &viewport);
-    vkCmdSetScissor(commandBuffers[imageIndex], 0, 1, &scissor);
-
-    renderGameObjects(commandBuffers[imageIndex]);
-
-    vkCmdEndRenderPass(commandBuffers[imageIndex]);
-    if (vkEndCommandBuffer(commandBuffers[imageIndex]) != VK_SUCCESS) {
-        throw std::runtime_error("Failed to record command buffer");
-    }
 }
 
 void Engine::renderGameObjects(VkCommandBuffer commandBuffer) {
@@ -196,32 +113,6 @@ void Engine::renderGameObjects(VkCommandBuffer commandBuffer) {
         obj.model->draw(commandBuffer);
     }
 }
-
-void Engine::drawFrame() {
-    uint32_t imageIndex;
-    VkResult result = swapChain->acquireNextImage(&imageIndex);
-
-    if (result == VK_ERROR_OUT_OF_DATE_KHR) {
-        recreateSwapChain();
-        return;
-    }
-
-    if (result != VK_SUCCESS && result != VK_SUBOPTIMAL_KHR) {
-        throw std::runtime_error("Failed to acquire swapchain image");
-    }
-
-    recordCommandBuffer(imageIndex);
-    result = swapChain->submitCommandBuffers(&commandBuffers[imageIndex], &imageIndex);
-    if (result == VK_ERROR_OUT_OF_DATE_KHR || result == VK_SUBOPTIMAL_KHR || window.wasWindowResized()) {
-        window.resetWindowResizedFlag();
-        recreateSwapChain();
-        return;
-    } else if (result != VK_SUCCESS) {
-        throw std::runtime_error("Failed to present swapchain image");
-    }
-}
-
-void Engine::init() {}
 
 void Engine::run() {
     bool quit = false;
@@ -248,15 +139,18 @@ void Engine::run() {
             continue;
         }
 
-        drawFrame();
+        if (VkCommandBuffer commandBuffer = renderer.beginFrame()) {
+            renderer.beginSwapChainRenderPass(commandBuffer);
+            renderGameObjects(commandBuffer);
+            renderer.endSwapChainRenderPass(commandBuffer);
+            renderer.endFrame();
+        }
 
         fps();
     }
 
     vkDeviceWaitIdle(device.getDevice());
 }
-
-void Engine::cleanup() {}
 
 void Engine::fps() {
     end = clock::now();

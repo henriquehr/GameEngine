@@ -4,7 +4,7 @@
 #include "game_object.h"
 #include "model.h"
 #include "pipeline.h"
-#include "swapchain.h"
+#include "renderer.h"
 #include "window.h"
 
 #include <SDL.h>
@@ -29,12 +29,11 @@ class Engine {
 
     Window window{WIDTH, HEIGHT};
     Device device{window};
-    std::unique_ptr<SwapChain> swapChain = nullptr;
+    Renderer renderer{window, device};
     std::unique_ptr<Pipeline> pipeline = nullptr;
     std::vector<GameObject> gameObjects{};
 
     VkPipelineLayout pipelineLayout{};
-    std::vector<VkCommandBuffer> commandBuffers{};
 
     void sierpinskiTriangle();
 
@@ -44,22 +43,10 @@ class Engine {
 
     void createPipeline();
 
-    void createCommandBuffers();
-
-    void freeCommandBuffers();
-
-    void drawFrame();
-
-    void recreateSwapChain();
-
-    void recordCommandBuffer(int imageIndex);
-
     void renderGameObjects(VkCommandBuffer commandBuffer);
 
   public:
-    void init();
     void run();
-    void cleanup();
 
   private:
     // FPS and frame time
