@@ -3,6 +3,7 @@
 #include "camera.h"
 #include "device.h"
 #include "game_object.h"
+#include "keyboard_movement_controller.h"
 #include "model.h"
 #include "renderer.h"
 #include "simple_render_system.h"
@@ -41,10 +42,11 @@ class Engine {
 
   private:
     // FPS and frame time
-    using clock = std::chrono::system_clock;
-    std::chrono::time_point<clock> start = clock::now();
-    std::chrono::time_point<clock> end{};
-    std::chrono::time_point<clock> lastUpdateTime = start;
+    using clock = std::chrono::high_resolution_clock;
+    float deltaTime = 0.0f;
+    std::chrono::time_point<clock> currentTime = clock::now();
+    std::chrono::time_point<clock> lastUpdateTime = clock::now();
     int frameCount = 0;
+
     void fps();
 };

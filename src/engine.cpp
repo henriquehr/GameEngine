@@ -70,7 +70,7 @@ void Engine::loadGameObjects() {
 
     GameObject cube = GameObject::createGameObject();
     cube.model = model;
-    cube.transform.translation = {0.0f, 0.0f, 0.0f};
+    cube.transform.translation = {0.0f, 0.0f, 2.5f};
     cube.transform.scale = {0.5f, 0.5f, 0.5f};
 
     gameObjects.push_back(std::move(cube));
@@ -79,11 +79,9 @@ void Engine::loadGameObjects() {
 void Engine::run() {
     SimpleRenderSystem simpleRenderSystem{device, renderer.getSwapChainRenderPass()};
     Camera camera{};
-    //    camera.setViewTarget(glm::vec3(0.0f, 0.0f, -2.5f), glm::vec3(-0.5f, 0.0f, 2.5f));
-    camera.setViewDirection(glm::vec3(-0.5f, 0.0f, -2.5f), glm::vec3(0.0f, 0.0f, 1.0f));
-    Camera cameraOrtho{};
-    //    cameraOrtho.setViewTarget(glm::vec3(0.0f, 0.0f, -0.5f), glm::vec3(-0.5f, 0.0f, 0.5f));
-    cameraOrtho.setViewDirection(glm::vec3(0.5f, 0.0f, 0.5f), glm::vec3(0.0f, 0.0f, 1.0f));
+
+    GameObject viewerObject = GameObject::createGameObject();
+    KeyboardMovementController cameraController{};
 
     bool quit = false;
     SDL_Event e;
@@ -104,6 +102,9 @@ void Engine::run() {
                 window.setHeight(e.window.data2);
             }
         }
+        cameraController.moveInPlaneXZ(deltaTime, viewerObject);
+        camera.setViewYXZ(viewerObject.transform.translation, viewerObject.transform.rotation);
+
         // Check if window is minimized and skip drawing
         if (SDL_GetWindowFlags(window.getSDLWindow()) & SDL_WINDOW_MINIMIZED) {
             continue;
@@ -111,12 +112,10 @@ void Engine::run() {
 
         float aspect = renderer.getAspectRatio();
         camera.setPerspectiveProjection(glm::radians(50.0f), aspect, 0.1f, 1000.0f);
-        cameraOrtho.setOrthographicProjection(-aspect, aspect, -1, 1, -1, 1000);
 
         if (VkCommandBuffer commandBuffer = renderer.beginFrame()) {
             renderer.beginSwapChainRenderPass(commandBuffer);
             simpleRenderSystem.renderGameObjects(commandBuffer, gameObjects, camera);
-            simpleRenderSystem.renderGameObjects(commandBuffer, gameObjects, cameraOrtho);
             renderer.endSwapChainRenderPass(commandBuffer);
             renderer.endFrame();
         }
@@ -128,20 +127,21 @@ void Engine::run() {
 }
 
 void Engine::fps() {
-    end = clock::now();
-    std::chrono::duration<float> elapsedTime = end - start;
-    bool oneSecond = (std::chrono::duration<double, std::milli>(end - lastUpdateTime).count()) >= 1000.0;
-    start = clock::now();
+    std::chrono::time_point newTime = clock::now();
+    deltaTime = std::chrono::duration<float, std::chrono::seconds::period>(newTime - currentTime).count();
+    bool oneSecond = (std::chrono::duration<double, std::milli>(newTime - lastUpdateTime).count()) >= 1000.0;
     frameCount++;
+    currentTime = newTime;
+
     if (oneSecond) {
         std::stringstream title;
         title << "FPS:" << std::to_string(frameCount);
-        title << "; CPU Time:" << std::format("{:.2f}", (elapsedTime.count() * 1000.0)) << "ms";
+        title << "; CPU Time:" << std::format("{:.2f}", (deltaTime * 1000.0)) << "ms";
 
         std::cout << title.str() << std::endl;
         SDL_SetWindowTitle(window.getSDLWindow(), title.str().c_str());
 
         frameCount = 0;
-        lastUpdateTime = start;
+        lastUpdateTime = newTime;
     }
 }
