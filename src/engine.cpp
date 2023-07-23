@@ -70,23 +70,20 @@ void Engine::loadGameObjects() {
 
     GameObject cube = GameObject::createGameObject();
     cube.model = model;
-    cube.transform.translation = {-0.5f, 0.0f, 2.5f};
+    cube.transform.translation = {0.0f, 0.0f, 0.0f};
     cube.transform.scale = {0.5f, 0.5f, 0.5f};
 
     gameObjects.push_back(std::move(cube));
-
-    GameObject cubeOrtho = GameObject::createGameObject();
-    cubeOrtho.model = model;
-    cubeOrtho.transform.translation = {0.5f, 0.0f, 0.5f};
-    cubeOrtho.transform.scale = {0.5f, 0.5f, 0.5f};
-
-    gameObjectsOrtho.push_back(std::move(cubeOrtho));
 }
 
 void Engine::run() {
     SimpleRenderSystem simpleRenderSystem{device, renderer.getSwapChainRenderPass()};
     Camera camera{};
+    //    camera.setViewTarget(glm::vec3(0.0f, 0.0f, -2.5f), glm::vec3(-0.5f, 0.0f, 2.5f));
+    camera.setViewDirection(glm::vec3(-0.5f, 0.0f, -2.5f), glm::vec3(0.0f, 0.0f, 1.0f));
     Camera cameraOrtho{};
+    //    cameraOrtho.setViewTarget(glm::vec3(0.0f, 0.0f, -0.5f), glm::vec3(-0.5f, 0.0f, 0.5f));
+    cameraOrtho.setViewDirection(glm::vec3(0.5f, 0.0f, 0.5f), glm::vec3(0.0f, 0.0f, 1.0f));
 
     bool quit = false;
     SDL_Event e;
@@ -113,13 +110,13 @@ void Engine::run() {
         }
 
         float aspect = renderer.getAspectRatio();
-        cameraOrtho.setOrthographicProjection(-aspect, aspect, -1, 1, -1, 1);
-        camera.setPerspectiveProjection(glm::radians(50.0f), aspect, 0.1f, 10.0f);
+        camera.setPerspectiveProjection(glm::radians(50.0f), aspect, 0.1f, 1000.0f);
+        cameraOrtho.setOrthographicProjection(-aspect, aspect, -1, 1, -1, 1000);
 
         if (VkCommandBuffer commandBuffer = renderer.beginFrame()) {
             renderer.beginSwapChainRenderPass(commandBuffer);
             simpleRenderSystem.renderGameObjects(commandBuffer, gameObjects, camera);
-            simpleRenderSystem.renderGameObjects(commandBuffer, gameObjectsOrtho, cameraOrtho);
+            simpleRenderSystem.renderGameObjects(commandBuffer, gameObjects, cameraOrtho);
             renderer.endSwapChainRenderPass(commandBuffer);
             renderer.endFrame();
         }

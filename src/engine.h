@@ -33,7 +33,6 @@ class Engine {
     Device device{window};
     Renderer renderer{window, device};
     std::vector<GameObject> gameObjects{};
-    std::vector<GameObject> gameObjectsOrtho{};
 
     void loadGameObjects();
 
