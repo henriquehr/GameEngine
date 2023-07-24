@@ -1,5 +1,17 @@
 
 #include "model.h"
+#include <tiny_obj_loader.h>
+
+namespace std {
+    template<>
+    struct hash<Model::Vertex> {
+        size_t operator()(Model::Vertex const &vertex) const {
+            size_t seed = 0;
+            hashCombine(seed, vertex.position, vertex.color, vertex.normal, vertex.uv);
+            return seed;
+        }
+    };
+}// namespace std
 
 Model::Model(Device &device, const Model::Data &data) : device(device) {
     createVertexBuffer(data.vertices);
@@ -14,6 +26,13 @@ Model::~Model() {
         vkDestroyBuffer(device.getDevice(), indexBuffer, nullptr);
         vkFreeMemory(device.getDevice(), indexBufferMemory, nullptr);
     }
+}
+
+std::unique_ptr<Model> Model::createModelFromFile(Device &device, const std::string &filePath) {
+    Data data{};
+    data.loadModel(filePath);
+    std::cout << "Vertex count " << filePath << ": " << data.vertices.size() << std::endl;
+    return std::make_unique<Model>(device, data);
 }
 
 void Model::createVertexBuffer(const std::vector<Vertex> &vertices) {
@@ -113,4 +132,60 @@ std::vector<VkVertexInputAttributeDescription> Model::Vertex::getAttributeDescri
     attributeDescriptions[1].offset = offsetof(Vertex, color);
 
     return attributeDescriptions;
+}
+
+void Model::Data::loadModel(const std::string &filePath) {
+    tinyobj::attrib_t attrib{};
+    std::vector<tinyobj::shape_t> shapes{};
+    std::vector<tinyobj::material_t> materials{};
+    std::string warn, err;
+
+    if (!tinyobj::LoadObj(&attrib, &shapes, &materials, &warn, &err, filePath.c_str())) {
+        throw std::runtime_error(warn + err);
+    }
+
+    indices.clear();
+    vertices.clear();
+
+    std::unordered_map<Vertex, uint32_t> uniqueVertices{};
+
+    for (const tinyobj::shape_t &shape: shapes) {
+        for (const tinyobj::index_t &index: shape.mesh.indices) {
+            Vertex vertex{};
+
+            if (index.vertex_index >= 0) {
+                vertex.position = {
+                        attrib.vertices[3 * index.vertex_index + 0],
+                        attrib.vertices[3 * index.vertex_index + 1],
+                        attrib.vertices[3 * index.vertex_index + 2],
+                };
+                vertex.color = {
+                        attrib.colors[3 * index.vertex_index + 0],
+                        attrib.colors[3 * index.vertex_index + 1],
+                        attrib.colors[3 * index.vertex_index + 2],
+                };
+            }
+
+            if (index.normal_index >= 0) {
+                vertex.normal = {
+                        attrib.normals[3 * index.normal_index + 0],
+                        attrib.normals[3 * index.normal_index + 1],
+                        attrib.normals[3 * index.normal_index + 2],
+                };
+            }
+
+            if (index.texcoord_index >= 0) {
+                vertex.uv = {
+                        attrib.texcoords[2 * index.texcoord_index + 0],
+                        attrib.texcoords[2 * index.texcoord_index + 1],
+                };
+            }
+
+            if (uniqueVertices.count(vertex) == 0) {
+                uniqueVertices[vertex] = static_cast<uint32_t>(vertices.size());
+                vertices.push_back(vertex);
+            }
+            indices.push_back(uniqueVertices[vertex]);
+        }
+    }
 }
