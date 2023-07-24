@@ -20,21 +20,24 @@ add_executable(ashwga
 set_target_properties(ashwga PROPERTIES CXX_STANDARD 20 CXX_STANDARD_REQUIRED YES CXX_EXTENSIONS NO)
 
 target_compile_definitions(ashwga PRIVATE GLM_FORCE_XYZW_ONLY GLM_FORCE_QUAT_DATA_XYZW GLM_FORCE_RADIANS GLM_FORCE_DEPTH_ZERO_TO_ONE)
+target_compile_definitions(ashwga PRIVATE TINYOBJLOADER_IMPLEMENTATION)
 target_compile_definitions(ashwga PRIVATE VK_USE_PLATFORM_WIN32_KHR)
 target_compile_definitions(ashwga PRIVATE WIN32_LEAN_AND_MEAN NOMINMAX)
 
 add_library(glm INTERFACE)
 add_library(sdl2 INTERFACE)
+add_library(tinyobjloader INTERFACE)
 
 target_include_directories(glm INTERFACE external/glm)
+target_include_directories(tinyobjloader INTERFACE external/tinyobjloader)
 
 set(sdl2_DIR "external/SDL2")
 target_include_directories(sdl2 INTERFACE ${sdl2_DIR}/include ${sdl2_image_DIR}/include)
 target_link_directories(sdl2 INTERFACE ${sdl2_DIR}/lib/x64 ${sdl2_image_DIR}/lib/x64)
 target_link_libraries(sdl2 INTERFACE SDL2 SDL2main)
 
-
 target_link_libraries(ashwga
+        tinyobjloader
         glm
         Vulkan::Vulkan
         sdl2
