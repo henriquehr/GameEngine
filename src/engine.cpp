@@ -1,6 +1,11 @@
 
 #include "engine.h"
 
+struct GlobalUbo {
+    glm::mat4 projectionView{1.0f};
+    glm::vec3 lightDirection = glm::normalize(glm::vec3(1.0f, -3.0f, -1.0f));
+};
+
 Engine::Engine() {
     loadGameObjects();
 }
@@ -11,7 +16,7 @@ void Engine::loadGameObjects() {
     std::shared_ptr<Model> model = Model::createModelFromFile(device, "../../models/smooth_vase.obj");
     GameObject gameObj = GameObject::createGameObject();
     gameObj.model = model;
-    gameObj.transform.translation = {0.0f, 0.5f, 2.5f};
+    gameObj.transform.translation = {-1.0f, 0.5f, 2.5f};
     gameObj.transform.scale = glm::vec3(3.0f);
     gameObjects.push_back(std::move(gameObj));
 
@@ -24,6 +29,13 @@ void Engine::loadGameObjects() {
 }
 
 void Engine::run() {
+    std::vector<std::unique_ptr<Buffer>> uboBuffers(SwapChain::MAX_FRAMES_IN_FLIGHT);
+    for (int i = 0; i < uboBuffers.size(); i++) {
+        uboBuffers[i] = std::make_unique<Buffer>(device, sizeof(GlobalUbo), 1, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
+                                                 VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT);
+        uboBuffers[i]->map();
+    }
+
     SimpleRenderSystem simpleRenderSystem{device, renderer.getSwapChainRenderPass()};
     Camera camera{};
     GameObject viewerObject = GameObject::createGameObject();
@@ -60,8 +72,16 @@ void Engine::run() {
         camera.setPerspectiveProjection(glm::radians(50.0f), aspect, 0.1f, 1000.0f);
 
         if (VkCommandBuffer commandBuffer = renderer.beginFrame()) {
+            int frameIndex = renderer.getFrameIndex();
+            FrameInfo frameInfo{frameIndex, deltaTime, commandBuffer, camera};
+            // update
+            GlobalUbo ubo{};
+            ubo.projectionView = camera.getProjection() * camera.getView();
+            uboBuffers[frameIndex]->writeToBuffer(&ubo);
+            uboBuffers[frameIndex]->flush();
+            //render
             renderer.beginSwapChainRenderPass(commandBuffer);
-            simpleRenderSystem.renderGameObjects(commandBuffer, gameObjects, camera);
+            simpleRenderSystem.renderGameObjects(frameInfo, gameObjects);
             renderer.endSwapChainRenderPass(commandBuffer);
             renderer.endFrame();
         }

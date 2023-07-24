@@ -1,5 +1,6 @@
 #pragma once
 
+#include "buffer.h"
 #include "device.h"
 #include "utils.h"
 
@@ -50,13 +51,11 @@ class Model {
   private:
     Device &device;
 
-    VkBuffer vertexBuffer{};
-    VkDeviceMemory vertexBufferMemory{};
+    std::unique_ptr<Buffer> vertexBuffer{};
     uint32_t vertexCount{};
 
     bool hasIndexBuffer = false;
-    VkBuffer indexBuffer{};
-    VkDeviceMemory indexBufferMemory{};
+    std::unique_ptr<Buffer> indexBuffer{};
     uint32_t indexCount{};
 
     void createVertexBuffer(const std::vector<Vertex> &vertices);

@@ -2,6 +2,7 @@
 
 #include "camera.h"
 #include "device.h"
+#include "frame_info.h"
 #include "game_object.h"
 #include "pipeline.h"
 
@@ -19,7 +20,7 @@ class SimpleRenderSystem {
     SimpleRenderSystem(const SimpleRenderSystem &) = delete;
     SimpleRenderSystem &operator=(const SimpleRenderSystem &) = delete;
 
-    void renderGameObjects(VkCommandBuffer commandBuffer, std::vector<GameObject> &gameObjects, const Camera &camera);
+    void renderGameObjects(FrameInfo frameInfo, std::vector<GameObject> &gameObjects);
 
   private:
     Device &device;
