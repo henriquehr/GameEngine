@@ -2,6 +2,7 @@
 
 #include "buffer.h"
 #include "camera.h"
+#include "descriptors.h"
 #include "device.h"
 #include "game_object.h"
 #include "keyboard_movement_controller.h"
@@ -27,6 +28,8 @@ class Engine {
     Engine(const Engine &) = delete;
     Engine &operator=(const Engine &) = delete;
 
+    void run();
+
   private:
     int WIDTH = 1600;
     int HEIGHT = 900;
@@ -34,14 +37,12 @@ class Engine {
     Window window{WIDTH, HEIGHT};
     Device device{window};
     Renderer renderer{window, device};
+
+    std::unique_ptr<DescriptorPool> globalPool{};
     std::vector<GameObject> gameObjects{};
 
     void loadGameObjects();
 
-  public:
-    void run();
-
-  private:
     // FPS and frame time
     using clock = std::chrono::high_resolution_clock;
     float deltaTime = 0.0f;

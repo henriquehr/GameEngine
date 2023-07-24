@@ -14,7 +14,7 @@
 // pipeline and its layout, and data to render game objects
 class SimpleRenderSystem {
   public:
-    SimpleRenderSystem(Device &device, VkRenderPass renderPass);
+    SimpleRenderSystem(Device &device, VkRenderPass renderPass, VkDescriptorSetLayout globalSetLayout);
     ~SimpleRenderSystem();
 
     SimpleRenderSystem(const SimpleRenderSystem &) = delete;
@@ -27,7 +27,7 @@ class SimpleRenderSystem {
     std::unique_ptr<Pipeline> pipeline = nullptr;
     VkPipelineLayout pipelineLayout{};
 
-    void createPipelineLayout();
+    void createPipelineLayout(VkDescriptorSetLayout globalSetLayout);
 
     void createPipeline(VkRenderPass renderPass);
 };
