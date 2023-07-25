@@ -40,20 +40,30 @@ glm::mat3 TransformComponent::normalMatrix() {
     const float s1 = glm::sin(rotation.y);
     const glm::vec3 inverseScale = 1.0f / scale;
 
-    return glm::mat3{{
-                             inverseScale.x * (c1 * c3 + s1 * s2 * s3),
-                             inverseScale.x * (c2 * s3),
-                             inverseScale.x * (c1 * s2 * s3 - c3 * s1),
-                     },
-                     {
-                             inverseScale.y * (c3 * s1 * s2 - c1 * s3),
-                             inverseScale.y * (c2 * c3),
-                             inverseScale.y * (c1 * c3 * s2 + s1 * s3),
-                     },
-                     {
-                             inverseScale.z * (c2 * s1),
-                             inverseScale.z * (-s2),
-                             inverseScale.z * (c1 * c2),
-                     },
+    return glm::mat3{
+            {
+                    inverseScale.x * (c1 * c3 + s1 * s2 * s3),
+                    inverseScale.x * (c2 * s3),
+                    inverseScale.x * (c1 * s2 * s3 - c3 * s1),
+            },
+            {
+                    inverseScale.y * (c3 * s1 * s2 - c1 * s3),
+                    inverseScale.y * (c2 * c3),
+                    inverseScale.y * (c1 * c3 * s2 + s1 * s3),
+            },
+            {
+                    inverseScale.z * (c2 * s1),
+                    inverseScale.z * (-s2),
+                    inverseScale.z * (c1 * c2),
+            },
     };
+}
+
+GameObject GameObject::makePointLight(float intensity, float radius, glm::vec3 color) {
+    GameObject gameObj = GameObject::createGameObject();
+    gameObj.color = color;
+    gameObj.transform.scale.x = radius;
+    gameObj.pointLight = std::make_unique<PointLightComponent>();
+    gameObj.pointLight->lightIntensity = intensity;
+    return gameObj;
 }
