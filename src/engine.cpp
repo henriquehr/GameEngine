@@ -3,7 +3,9 @@
 
 struct GlobalUbo {
     glm::mat4 projectionView{1.0f};
-    glm::vec3 lightDirection = glm::normalize(glm::vec3(1.0f, -3.0f, -1.0f));
+    glm::vec4 ambientLightColor{1.0f, 1.0f, 1.0f, 0.02f};// w is intensity
+    glm::vec3 lightPosition{-1.0f};
+    alignas(16) glm::vec4 lightColor{1.0f, 1.0f, 1.0f, 1.0f};// w is intensity
 };
 
 Engine::Engine() {
@@ -18,18 +20,25 @@ Engine::~Engine() {}
 
 void Engine::loadGameObjects() {
     std::shared_ptr<Model> model = Model::createModelFromFile(device, "../../models/smooth_vase.obj");
-    GameObject gameObj = GameObject::createGameObject();
-    gameObj.model = model;
-    gameObj.transform.translation = {-1.0f, 0.5f, 2.5f};
-    gameObj.transform.scale = glm::vec3(3.0f);
-    gameObjects.push_back(std::move(gameObj));
+    GameObject vase = GameObject::createGameObject();
+    vase.model = model;
+    vase.transform.translation = {-1.0f, 0.5f, 0.0f};
+    vase.transform.scale = glm::vec3(3.0f);
+    gameObjects.push_back(std::move(vase));
 
-    std::shared_ptr<Model> cubeModel = Model::createModelFromFile(device, "../../models/colored_cube.obj");
+    model = Model::createModelFromFile(device, "../../models/colored_cube.obj");
     GameObject cube = GameObject::createGameObject();
-    cube.model = cubeModel;
-    cube.transform.translation = {1.0f, 0.0f, 2.5f};
+    cube.model = model;
+    cube.transform.translation = {1.0f, 0.0f, 0.0f};
     cube.transform.scale = glm::vec3(0.5f);
     gameObjects.push_back(std::move(cube));
+
+    model = Model::createModelFromFile(device, "../../models/quad.obj");
+    GameObject floor = GameObject::createGameObject();
+    floor.model = model;
+    floor.transform.translation = {0.0f, 0.5f, 0.0f};
+    floor.transform.scale = glm::vec3(3.0f, 1.0f, 3.0f);
+    gameObjects.push_back(std::move(floor));
 }
 
 void Engine::run() {
@@ -52,6 +61,7 @@ void Engine::run() {
     SimpleRenderSystem simpleRenderSystem{device, renderer.getSwapChainRenderPass(), globalSetLayout->getDescriptorSetLayout()};
     Camera camera{};
     GameObject viewerObject = GameObject::createGameObject();
+    viewerObject.transform.translation.z = -2.5;
     KeyboardMovementController cameraController{};
 
     bool quit = false;
