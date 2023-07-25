@@ -5,6 +5,7 @@
 #include "glm/gtc/matrix_transform.hpp"
 
 #include <memory>
+#include <unordered_map>
 
 struct TransformComponent {
     glm::vec3 translation{};
@@ -26,6 +27,7 @@ class GameObject {
     GameObject &operator=(GameObject &&) = default;
 
     using id_t = unsigned int;
+    using Map = std::unordered_map<id_t, GameObject>;
 
     std::shared_ptr<Model> model{};
     glm::vec3 color{};

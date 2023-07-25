@@ -46,7 +46,7 @@ void SimpleRenderSystem::createPipeline(VkRenderPass renderPass) {
                                           "../../shaders/compiled/simple.frag.spv");
 }
 
-void SimpleRenderSystem::renderGameObjects(FrameInfo frameInfo, std::vector<GameObject> &gameObjects) {
+void SimpleRenderSystem::renderGameObjects(FrameInfo frameInfo) {
     pipeline->bind(frameInfo.commandBuffer);
 
     glm::mat4 projectionView = frameInfo.camera.getProjection() * frameInfo.camera.getView();
@@ -54,7 +54,12 @@ void SimpleRenderSystem::renderGameObjects(FrameInfo frameInfo, std::vector<Game
     vkCmdBindDescriptorSets(frameInfo.commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipelineLayout, 0, 1, &frameInfo.globalDescriptorSet,
                             0, nullptr);
 
-    for (GameObject &obj: gameObjects) {
+    for (std::pair<const GameObject::id_t, GameObject> &kv: frameInfo.gameObjects) {
+        GameObject &obj = kv.second;
+        if (obj.model == nullptr) {
+            continue;
+        }
+
         SimplePushConstantData push{};
         push.modelMatrix = obj.transform.mat4();
         push.normalMatrix = obj.transform.normalMatrix();

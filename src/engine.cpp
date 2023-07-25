@@ -22,23 +22,31 @@ void Engine::loadGameObjects() {
     std::shared_ptr<Model> model = Model::createModelFromFile(device, "../../models/smooth_vase.obj");
     GameObject vase = GameObject::createGameObject();
     vase.model = model;
-    vase.transform.translation = {-1.0f, 0.5f, 0.0f};
+    vase.transform.translation = {-0.5f, 0.5f, 0.0f};
     vase.transform.scale = glm::vec3(3.0f);
-    gameObjects.push_back(std::move(vase));
+    gameObjects.emplace(vase.getId(), std::move(vase));
 
     model = Model::createModelFromFile(device, "../../models/colored_cube.obj");
     GameObject cube = GameObject::createGameObject();
     cube.model = model;
-    cube.transform.translation = {1.0f, 0.0f, 0.0f};
+    cube.transform.translation = {0.5f, 0.0f, 0.0f};
     cube.transform.scale = glm::vec3(0.5f);
-    gameObjects.push_back(std::move(cube));
+    gameObjects.emplace(cube.getId(), std::move(cube));
+
+    model = Model::createModelFromFile(device, "../../models/pirate.obj");
+    GameObject pirate = GameObject::createGameObject();
+    pirate.model = model;
+    pirate.transform.translation = {-1.5f, 0.5f, 0.0f};
+    pirate.transform.rotation.x = glm::radians(180.0f);
+    pirate.transform.scale = glm::vec3(1.0f);
+    gameObjects.emplace(pirate.getId(), std::move(pirate));
 
     model = Model::createModelFromFile(device, "../../models/quad.obj");
     GameObject floor = GameObject::createGameObject();
     floor.model = model;
     floor.transform.translation = {0.0f, 0.5f, 0.0f};
     floor.transform.scale = glm::vec3(3.0f, 1.0f, 3.0f);
-    gameObjects.push_back(std::move(floor));
+    gameObjects.emplace(floor.getId(), std::move(floor));
 }
 
 void Engine::run() {
@@ -50,7 +58,7 @@ void Engine::run() {
     }
 
     std::unique_ptr<DescriptorSetLayout> globalSetLayout =
-            DescriptorSetLayout::Builder(device).addBinding(0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_VERTEX_BIT).build();
+            DescriptorSetLayout::Builder(device).addBinding(0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_ALL_GRAPHICS).build();
 
     std::vector<VkDescriptorSet> globalDescriptorSets(SwapChain::MAX_FRAMES_IN_FLIGHT);
     for (int i = 0; i < globalDescriptorSets.size(); i++) {
@@ -96,7 +104,7 @@ void Engine::run() {
 
         if (VkCommandBuffer commandBuffer = renderer.beginFrame()) {
             int frameIndex = renderer.getFrameIndex();
-            FrameInfo frameInfo{frameIndex, deltaTime, commandBuffer, camera, globalDescriptorSets[frameIndex]};
+            FrameInfo frameInfo{frameIndex, deltaTime, commandBuffer, camera, globalDescriptorSets[frameIndex], gameObjects};
             // update
             GlobalUbo ubo{};
             ubo.projectionView = camera.getProjection() * camera.getView();
@@ -104,7 +112,7 @@ void Engine::run() {
             uboBuffers[frameIndex]->flush();
             //render
             renderer.beginSwapChainRenderPass(commandBuffer);
-            simpleRenderSystem.renderGameObjects(frameInfo, gameObjects);
+            simpleRenderSystem.renderGameObjects(frameInfo);
             renderer.endSwapChainRenderPass(commandBuffer);
             renderer.endFrame();
         }
