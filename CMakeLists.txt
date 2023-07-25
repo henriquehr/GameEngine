@@ -4,6 +4,7 @@ project("ashwga")
 
 find_package(Vulkan REQUIRED)
 
+add_definitions(/MP)
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${PROJECT_SOURCE_DIR}/bin")
 set(CMAKE_CONFIGURATION_TYPES "Debug;Release;MinSizeRel;RelWithDebInfo")
 
