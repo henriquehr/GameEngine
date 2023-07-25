@@ -2,7 +2,8 @@
 #include "engine.h"
 
 struct GlobalUbo {
-    glm::mat4 projectionView{1.0f};
+    glm::mat4 projection{1.0f};
+    glm::mat4 view{1.0f};
     glm::vec4 ambientLightColor{1.0f, 1.0f, 1.0f, 0.02f};// w is intensity
     glm::vec3 lightPosition{-1.0f};
     alignas(16) glm::vec4 lightColor{1.0f, 1.0f, 1.0f, 1.0f};// w is intensity
@@ -38,7 +39,7 @@ void Engine::loadGameObjects() {
     pirate.model = model;
     pirate.transform.translation = {-1.5f, 0.5f, 0.0f};
     pirate.transform.rotation.x = glm::radians(180.0f);
-    pirate.transform.scale = glm::vec3(1.0f);
+    pirate.transform.scale = glm::vec3(0.5f);
     gameObjects.emplace(pirate.getId(), std::move(pirate));
 
     model = Model::createModelFromFile(device, "../../models/quad.obj");
@@ -67,6 +68,7 @@ void Engine::run() {
     }
 
     SimpleRenderSystem simpleRenderSystem{device, renderer.getSwapChainRenderPass(), globalSetLayout->getDescriptorSetLayout()};
+    PointLightSystem pointLightSystem{device, renderer.getSwapChainRenderPass(), globalSetLayout->getDescriptorSetLayout()};
     Camera camera{};
     GameObject viewerObject = GameObject::createGameObject();
     viewerObject.transform.translation.z = -2.5;
@@ -107,12 +109,14 @@ void Engine::run() {
             FrameInfo frameInfo{frameIndex, deltaTime, commandBuffer, camera, globalDescriptorSets[frameIndex], gameObjects};
             // update
             GlobalUbo ubo{};
-            ubo.projectionView = camera.getProjection() * camera.getView();
+            ubo.projection = camera.getProjection();
+            ubo.view = camera.getView();
             uboBuffers[frameIndex]->writeToBuffer(&ubo);
             uboBuffers[frameIndex]->flush();
             //render
             renderer.beginSwapChainRenderPass(commandBuffer);
             simpleRenderSystem.renderGameObjects(frameInfo);
+            pointLightSystem.render(frameInfo);
             renderer.endSwapChainRenderPass(commandBuffer);
             renderer.endFrame();
         }

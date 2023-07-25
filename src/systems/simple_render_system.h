@@ -1,13 +1,13 @@
 #pragma once
 
-#include "camera.h"
-#include "device.h"
-#include "frame_info.h"
-#include "game_object.h"
-#include "pipeline.h"
+#include "../camera.h"
+#include "../device.h"
+#include "../frame_info.h"
+#include "../game_object.h"
+#include "../pipeline.h"
 
-#include <glm/glm.hpp>
-#include <glm/gtc/constants.hpp>
+#include "glm/glm.hpp"
+#include "glm/gtc/constants.hpp"
 
 #include <memory>
 

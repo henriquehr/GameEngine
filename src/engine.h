@@ -8,7 +8,8 @@
 #include "keyboard_movement_controller.h"
 #include "model.h"
 #include "renderer.h"
-#include "simple_render_system.h"
+#include "systems/point_light_system.h"
+#include "systems/simple_render_system.h"
 #include "window.h"
 
 #include <SDL.h>
