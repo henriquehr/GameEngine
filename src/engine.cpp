@@ -74,6 +74,8 @@ void Engine::run() {
     viewerObject.transform.translation.z = -2.5;
     KeyboardMovementController cameraController{};
 
+    std::cout << "Startup time: " << std::chrono::duration<float, std::chrono::seconds::period>(clock::now() - currentTime).count()
+              << " seconds" << std::endl;
     bool quit = false;
     SDL_Event e;
     while (!quit) {

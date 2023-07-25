@@ -45,7 +45,7 @@ class Engine {
     void loadGameObjects();
 
     // FPS and frame time
-    using clock = std::chrono::high_resolution_clock;
+    using clock = std::chrono::system_clock;
     float deltaTime = 0.0f;
     std::chrono::time_point<clock> currentTime = clock::now();
     std::chrono::time_point<clock> lastUpdateTime = clock::now();
