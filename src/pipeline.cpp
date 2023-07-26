@@ -93,9 +93,7 @@ void Pipeline::createGraphicsPipeline(const PipelineConfigInfo &configInfo, cons
     pipelineInfo.basePipelineIndex = -1;
     pipelineInfo.basePipelineHandle = VK_NULL_HANDLE;
 
-    if (vkCreateGraphicsPipelines(device.getDevice(), nullptr, 1, &pipelineInfo, nullptr, &graphicsPipeline) != VK_SUCCESS) {
-        throw std::runtime_error("Failed to create graphics pipeline");
-    }
+    VK_CHECK(vkCreateGraphicsPipelines(device.getDevice(), nullptr, 1, &pipelineInfo, nullptr, &graphicsPipeline));
 }
 
 void Pipeline::createShaderModule(const std::vector<char> &code, VkShaderModule *shaderModule) {
@@ -103,9 +101,7 @@ void Pipeline::createShaderModule(const std::vector<char> &code, VkShaderModule 
     createInfo.codeSize = code.size();
     createInfo.pCode = reinterpret_cast<const uint32_t *>(code.data());
 
-    if (vkCreateShaderModule(device.getDevice(), &createInfo, nullptr, shaderModule) != VK_SUCCESS) {
-        throw std::runtime_error("Failed to create shader module");
-    }
+    VK_CHECK(vkCreateShaderModule(device.getDevice(), &createInfo, nullptr, shaderModule));
 }
 
 void Pipeline::bind(VkCommandBuffer commandBuffer) {

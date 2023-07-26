@@ -85,9 +85,7 @@ VkResult SwapChain::submitCommandBuffers(const VkCommandBuffer *buffers, uint32_
     submitInfo.pSignalSemaphores = signalSemaphores;
 
     vkResetFences(device.getDevice(), 1, &inFlightFences[currentFrame]);
-    if (vkQueueSubmit(device.getGraphicsQueue(), 1, &submitInfo, inFlightFences[currentFrame]) != VK_SUCCESS) {
-        throw std::runtime_error("Failed to submit draw command buffer");
-    }
+    VK_CHECK(vkQueueSubmit(device.getGraphicsQueue(), 1, &submitInfo, inFlightFences[currentFrame]));
 
     VkPresentInfoKHR presentInfo = {};
     presentInfo.sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
@@ -154,9 +152,7 @@ void SwapChain::createSwapChain() {
 
     createInfo.oldSwapchain = oldSwapChain == nullptr ? VK_NULL_HANDLE : oldSwapChain->swapChain;
 
-    if (vkCreateSwapchainKHR(device.getDevice(), &createInfo, nullptr, &swapChain) != VK_SUCCESS) {
-        throw std::runtime_error("Failed to create swap chain");
-    }
+    VK_CHECK(vkCreateSwapchainKHR(device.getDevice(), &createInfo, nullptr, &swapChain));
 
     // we only specified a minimum number of images in the swap chain, so the implementation is
     // allowed to create a swap chain with more. That's why we'll first query the final number of
@@ -184,9 +180,7 @@ void SwapChain::createImageViews() {
         viewInfo.subresourceRange.baseArrayLayer = 0;
         viewInfo.subresourceRange.layerCount = 1;
 
-        if (vkCreateImageView(device.getDevice(), &viewInfo, nullptr, &swapChainImageViews[i]) != VK_SUCCESS) {
-            throw std::runtime_error("Failed to create texture image view");
-        }
+        VK_CHECK(vkCreateImageView(device.getDevice(), &viewInfo, nullptr, &swapChainImageViews[i]));
     }
 }
 
@@ -243,9 +237,7 @@ void SwapChain::createRenderPass() {
     renderPassInfo.dependencyCount = 1;
     renderPassInfo.pDependencies = &dependency;
 
-    if (vkCreateRenderPass(device.getDevice(), &renderPassInfo, nullptr, &renderPass) != VK_SUCCESS) {
-        throw std::runtime_error("Failed to create render pass");
-    }
+    VK_CHECK(vkCreateRenderPass(device.getDevice(), &renderPassInfo, nullptr, &renderPass));
 }
 
 void SwapChain::createFramebuffers() {
@@ -263,9 +255,7 @@ void SwapChain::createFramebuffers() {
         framebufferInfo.height = swapChainExtent.height;
         framebufferInfo.layers = 1;
 
-        if (vkCreateFramebuffer(device.getDevice(), &framebufferInfo, nullptr, &swapChainFramebuffers[i]) != VK_SUCCESS) {
-            throw std::runtime_error("Failed to create framebuffer");
-        }
+        VK_CHECK(vkCreateFramebuffer(device.getDevice(), &framebufferInfo, nullptr, &swapChainFramebuffers[i]));
     }
 }
 
@@ -308,9 +298,7 @@ void SwapChain::createDepthResources() {
         viewInfo.subresourceRange.baseArrayLayer = 0;
         viewInfo.subresourceRange.layerCount = 1;
 
-        if (vkCreateImageView(device.getDevice(), &viewInfo, nullptr, &depthImageViews[i]) != VK_SUCCESS) {
-            throw std::runtime_error("Failed to create texture image view");
-        }
+        VK_CHECK(vkCreateImageView(device.getDevice(), &viewInfo, nullptr, &depthImageViews[i]));
     }
 }
 

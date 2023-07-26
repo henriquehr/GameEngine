@@ -1,6 +1,17 @@
 #pragma once
 
+#include <cassert>
 #include <functional>
+#include <iostream>
+
+#define VK_CHECK(x)                                                                                                                        \
+    do {                                                                                                                                   \
+        VkResult err = x;                                                                                                                  \
+        if (err) {                                                                                                                         \
+            std::cerr << __FILE__ << ":" << __LINE__ << " -> VULKAN ERROR: " << err << std::endl;                                          \
+            abort();                                                                                                                       \
+        }                                                                                                                                  \
+    } while (0)
 
 // from: https://stackoverflow.com/a/57595105
 template<typename T, typename... Rest>

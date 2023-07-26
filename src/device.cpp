@@ -4,7 +4,7 @@
 static VKAPI_ATTR VkBool32 VKAPI_CALL debugCallback(VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity,
                                                     VkDebugUtilsMessageTypeFlagsEXT messageType,
                                                     const VkDebugUtilsMessengerCallbackDataEXT *pCallbackData, void *pUserData) {
-    std::cerr << "Validation layer: " << pCallbackData->pMessage << std::endl;
+    std::cerr << pCallbackData->pMessage << std::endl;
 
     return VK_FALSE;
 }
@@ -82,9 +82,7 @@ void Device::createInstance() {
         createInfo.pNext = nullptr;
     }
 
-    if (vkCreateInstance(&createInfo, nullptr, &instance) != VK_SUCCESS) {
-        throw std::runtime_error("Failed to create instance");
-    }
+    VK_CHECK(vkCreateInstance(&createInfo, nullptr, &instance));
 
     hasSDLRequiredInstanceExtensions();
 }
@@ -152,9 +150,7 @@ void Device::createLogicalDevice() {
         createInfo.enabledLayerCount = 0;
     }
 
-    if (vkCreateDevice(physicalDevice, &createInfo, nullptr, &device) != VK_SUCCESS) {
-        throw std::runtime_error("Failed to create logical device");
-    }
+    VK_CHECK(vkCreateDevice(physicalDevice, &createInfo, nullptr, &device));
 
     vkGetDeviceQueue(device, indices.graphicsFamily, 0, &graphicsQueue);
     vkGetDeviceQueue(device, indices.presentFamily, 0, &presentQueue);
@@ -172,9 +168,7 @@ void Device::createCommandPool() {
     poolInfo.queueFamilyIndex = queueFamilyIndices.graphicsFamily;
     poolInfo.flags = VK_COMMAND_POOL_CREATE_TRANSIENT_BIT | VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT;
 
-    if (vkCreateCommandPool(device, &poolInfo, nullptr, &commandPool) != VK_SUCCESS) {
-        throw std::runtime_error("Failed to create command pool");
-    }
+    VK_CHECK(vkCreateCommandPool(device, &poolInfo, nullptr, &commandPool));
 }
 
 void Device::createSurface() {
@@ -214,9 +208,7 @@ void Device::setupDebugMessenger() {
     }
     VkDebugUtilsMessengerCreateInfoEXT createInfo;
     populateDebugMessengerCreateInfo(createInfo);
-    if (CreateDebugUtilsMessengerEXT(instance, &createInfo, nullptr, &debugMessenger) != VK_SUCCESS) {
-        throw std::runtime_error("Failed to set up debug messenger");
-    }
+    VK_CHECK(CreateDebugUtilsMessengerEXT(instance, &createInfo, nullptr, &debugMessenger));
 }
 
 bool Device::checkValidationLayerSupport() {
@@ -389,9 +381,7 @@ void Device::createBuffer(VkDeviceSize size, VkBufferUsageFlags usage, VkMemoryP
     bufferInfo.usage = usage;
     bufferInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
 
-    if (vkCreateBuffer(device, &bufferInfo, nullptr, &buffer) != VK_SUCCESS) {
-        throw std::runtime_error("Failed to create vertex buffer");
-    }
+    VK_CHECK(vkCreateBuffer(device, &bufferInfo, nullptr, &buffer));
 
     VkMemoryRequirements memRequirements;
     vkGetBufferMemoryRequirements(device, buffer, &memRequirements);
@@ -401,9 +391,7 @@ void Device::createBuffer(VkDeviceSize size, VkBufferUsageFlags usage, VkMemoryP
     allocInfo.allocationSize = memRequirements.size;
     allocInfo.memoryTypeIndex = findMemoryType(memRequirements.memoryTypeBits, properties);
 
-    if (vkAllocateMemory(device, &allocInfo, nullptr, &bufferMemory) != VK_SUCCESS) {
-        throw std::runtime_error("Failed to allocate vertex buffer memory");
-    }
+    VK_CHECK(vkAllocateMemory(device, &allocInfo, nullptr, &bufferMemory));
 
     vkBindBufferMemory(device, buffer, bufferMemory, 0);
 }
@@ -474,9 +462,7 @@ void Device::copyBufferToImage(VkBuffer buffer, VkImage image, uint32_t width, u
 
 void Device::createImageWithInfo(const VkImageCreateInfo &imageInfo, VkMemoryPropertyFlags properties, VkImage &image,
                                  VkDeviceMemory &imageMemory) {
-    if (vkCreateImage(device, &imageInfo, nullptr, &image) != VK_SUCCESS) {
-        throw std::runtime_error("Failed to create image");
-    }
+    VK_CHECK(vkCreateImage(device, &imageInfo, nullptr, &image));
 
     VkMemoryRequirements memRequirements;
     vkGetImageMemoryRequirements(device, image, &memRequirements);
@@ -486,11 +472,7 @@ void Device::createImageWithInfo(const VkImageCreateInfo &imageInfo, VkMemoryPro
     allocInfo.allocationSize = memRequirements.size;
     allocInfo.memoryTypeIndex = findMemoryType(memRequirements.memoryTypeBits, properties);
 
-    if (vkAllocateMemory(device, &allocInfo, nullptr, &imageMemory) != VK_SUCCESS) {
-        throw std::runtime_error("Failed to allocate image memory");
-    }
+    VK_CHECK(vkAllocateMemory(device, &allocInfo, nullptr, &imageMemory));
 
-    if (vkBindImageMemory(device, image, imageMemory, 0) != VK_SUCCESS) {
-        throw std::runtime_error("Failed to bind image memory");
-    }
+    VK_CHECK(vkBindImageMemory(device, image, imageMemory, 0));
 }

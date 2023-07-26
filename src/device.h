@@ -1,5 +1,6 @@
 #pragma once
 
+#include "utils.h"
 #include "window.h"
 
 #include "SDL_vulkan.h"

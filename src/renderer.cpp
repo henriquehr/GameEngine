@@ -39,9 +39,7 @@ void Renderer::createCommandBuffers() {
     allocateInfo.commandPool = device.getCommandPool();
     allocateInfo.commandBufferCount = static_cast<uint32_t>(commandBuffers.size());
 
-    if (vkAllocateCommandBuffers(device.getDevice(), &allocateInfo, commandBuffers.data()) != VK_SUCCESS) {
-        throw std::runtime_error("Failed to allocate command buffers");
-    }
+    VK_CHECK(vkAllocateCommandBuffers(device.getDevice(), &allocateInfo, commandBuffers.data()));
 }
 
 void Renderer::freeCommandBuffers() {
@@ -68,9 +66,7 @@ VkCommandBuffer Renderer::beginFrame() {
     VkCommandBuffer commandBuffer = getCurrentCommandBuffer();
     VkCommandBufferBeginInfo beginInfo{VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO};
 
-    if (vkBeginCommandBuffer(commandBuffer, &beginInfo) != VK_SUCCESS) {
-        throw std::runtime_error("Failed to being recording command buffer");
-    }
+    VK_CHECK(vkBeginCommandBuffer(commandBuffer, &beginInfo));
 
     return commandBuffer;
 }
@@ -80,9 +76,7 @@ void Renderer::endFrame() {
 
     VkCommandBuffer commandBuffer = getCurrentCommandBuffer();
 
-    if (vkEndCommandBuffer(commandBuffer) != VK_SUCCESS) {
-        throw std::runtime_error("Failed to record command buffer");
-    }
+    VK_CHECK(vkEndCommandBuffer(commandBuffer));
 
     VkResult result = swapChain->submitCommandBuffers(&commandBuffer, &currentImageIndex);
 

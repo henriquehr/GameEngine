@@ -2,6 +2,7 @@
 
 #include "device.h"
 #include "model.h"
+#include "utils.h"
 
 #include <cassert>
 #include <fstream>
