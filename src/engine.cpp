@@ -116,13 +116,7 @@ void Engine::run() {
         float aspect = renderer.getAspectRatio();
         camera.setPerspectiveProjection(glm::radians(50.0f), aspect, 0.1f, 1000.0f);
 
-        //imgui new frame
-        ImGui_ImplVulkan_NewFrame();
-        ImGui_ImplSDL2_NewFrame(window.getSDLWindow());
-        ImGui::NewFrame();
-        //imgui commands
-        ImGui::ShowMetricsWindow();
-        ImGui::Render();
+        imguiSystem.preRender(&window, camera, viewerObject);
 
         if (VkCommandBuffer commandBuffer = renderer.beginFrame()) {
             int frameIndex = renderer.getFrameIndex();
@@ -153,21 +147,21 @@ void Engine::run() {
 void Engine::fps() {
     std::chrono::time_point newTime = clock::now();
     deltaTime = std::chrono::duration<float, std::chrono::seconds::period>(newTime - currentTime).count();
-    bool oneSecond = (std::chrono::duration<double, std::milli>(newTime - lastUpdateTime).count()) >= 1000.0;
-    frameCount++;
     currentTime = newTime;
+    //    bool oneSecond = (std::chrono::duration<double, std::milli>(newTime - lastUpdateTime).count()) >= 1000.0;
+    //    frameCount++;
 
-    if (oneSecond) {
-        std::stringstream title;
-        title << "FPS:" << std::to_string(frameCount);
-        title << "; CPU Time:" << std::format("{:.2f}", (deltaTime * 1000.0)) << "ms";
-
-        //        std::cout << title.str() << std::endl;
-        SDL_SetWindowTitle(window.getSDLWindow(), title.str().c_str());
-
-        frameCount = 0;
-        lastUpdateTime = newTime;
-    }
+    //    if (oneSecond) {
+    //        std::stringstream title;
+    //        title << "FPS:" << std::to_string(frameCount);
+    //        title << "; CPU Time:" << std::format("{:.2f}", (deltaTime * 1000.0)) << "ms";
+    //
+    //        //        std::cout << title.str() << std::endl;
+    //        SDL_SetWindowTitle(window.getSDLWindow(), title.str().c_str());
+    //
+    //        frameCount = 0;
+    //        lastUpdateTime = newTime;
+    //    }
 }
 
 void Engine::init_imgui(const ImguiSystem &imguiSystem) {
