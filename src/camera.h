@@ -1,5 +1,6 @@
 #pragma once
 
+#include "glm/ext/matrix_transform.hpp"
 #include "glm/glm.hpp"
 
 #include <cassert>
@@ -15,7 +16,7 @@ class Camera {
 
     void setViewTarget(glm::vec3 position, glm::vec3 target, glm::vec3 up = {0.0f, -1.0f, 0.0f});
 
-    void setViewYXZ(glm::vec3 position, glm::vec3 rotation);
+    void setView(glm::vec3 position, glm::mat4 rotation);
 
     const glm::mat4 &getProjection() const {
         return projectionMatrix;
@@ -23,12 +24,8 @@ class Camera {
     const glm::mat4 &getView() const {
         return viewMatrix;
     }
-    const glm::mat4 &getInverseView() const {
-        return inverseViewMatrix;
-    }
 
   private:
     glm::mat4 projectionMatrix{1.0f};
     glm::mat4 viewMatrix{1.0f};
-    glm::mat4 inverseViewMatrix{1.0f};
 };

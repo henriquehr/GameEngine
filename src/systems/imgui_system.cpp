@@ -9,22 +9,36 @@ void ImguiSystem::uploadFonts(VkCommandBuffer commandBuffer) const {
     ImGui_ImplVulkan_CreateFontsTexture(commandBuffer);
 }
 
-void ImguiSystem::preRender(Window *window, const Camera &camera, const GameObject &viewerObject) {
+void ImguiSystem::preRender(Window *window, const Camera &camera, const GameObject &viewerObject,
+                            FirstPersonMovementController cameraController, float startupTime) {
     //imgui new frame
     ImGui_ImplVulkan_NewFrame();
     ImGui_ImplSDL2_NewFrame(window->getSDLWindow());
     ImGui::NewFrame();
     //imgui commands
     float framerate = ImGui::GetIO().Framerate;
-    ImGui::Text("Frametime: %.3fms, FPS: %.1f", 1000.0f / framerate, framerate);
+    ImGui::Text("Frametime: %.3fms, FPS: %.1f, Startup Time: %.3fms", 1000.0f / framerate, framerate, startupTime);
     if (ImGui::CollapsingHeader("CAMERA")) {
-        if (ImGui::TreeNode("Position")) {
+        if (ImGui::TreeNode("Position Vector")) {
             if (ImGui::BeginTable("table1", 3)) {
                 for (int row = 0; row < 1; row++) {
                     ImGui::TableNextRow();
                     for (int column = 0; column < 3; column++) {
                         ImGui::TableSetColumnIndex(column);
                         ImGui::Text("%f", viewerObject.transform.translation[column]);
+                    }
+                }
+                ImGui::EndTable();
+            }
+            ImGui::TreePop();
+        }
+        if (ImGui::TreeNode("Rotation Matrix")) {
+            if (ImGui::BeginTable("table1", 4)) {
+                for (int row = 0; row < 4; row++) {
+                    ImGui::TableNextRow();
+                    for (int column = 0; column < 4; column++) {
+                        ImGui::TableSetColumnIndex(column);
+                        ImGui::Text("%f", cameraController.getMouseRotation()[row][column]);
                     }
                 }
                 ImGui::EndTable();

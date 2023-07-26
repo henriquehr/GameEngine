@@ -79,12 +79,12 @@ void Engine::run() {
     Camera camera{};
     GameObject viewerObject = GameObject::createGameObject();
     viewerObject.transform.translation.z = -2.5;
-    KeyboardMovementController cameraController{};
+    FirstPersonMovementController cameraController{};
 
     init_imgui(imguiSystem);
 
-    std::cout << "Startup time: " << std::chrono::duration<float, std::chrono::seconds::period>(clock::now() - currentTime).count()
-              << " seconds" << std::endl;
+    float startupTime = std::chrono::duration<float, std::chrono::seconds::period>(clock::now() - currentTime).count();
+    std::cout << "Startup time: " << startupTime << " seconds" << std::endl;
     bool quit = false;
     SDL_Event e;
     while (!quit) {
@@ -103,6 +103,8 @@ void Engine::run() {
                 window.setFramebufferResized();
                 window.setWidth(e.window.data1);
                 window.setHeight(e.window.data2);
+            } else if (e.type == SDL_MOUSEMOTION) {
+                cameraController.setPitchYaw(e.motion.yrel, e.motion.xrel);
             }
         }
         // Check if window is minimized and skip drawing
@@ -110,13 +112,13 @@ void Engine::run() {
             continue;
         }
 
-        cameraController.moveInPlaneXZ(deltaTime, viewerObject);
-        camera.setViewYXZ(viewerObject.transform.translation, viewerObject.transform.rotation);
+        cameraController.move(deltaTime, viewerObject);
+        camera.setView(viewerObject.transform.translation, cameraController.getMouseRotation());
 
         float aspect = renderer.getAspectRatio();
         camera.setPerspectiveProjection(glm::radians(50.0f), aspect, 0.1f, 1000.0f);
 
-        imguiSystem.preRender(&window, camera, viewerObject);
+        imguiSystem.preRender(&window, camera, viewerObject, cameraController, startupTime);
 
         if (VkCommandBuffer commandBuffer = renderer.beginFrame()) {
             int frameIndex = renderer.getFrameIndex();
@@ -125,7 +127,6 @@ void Engine::run() {
             GlobalUbo ubo{};
             ubo.projection = camera.getProjection();
             ubo.view = camera.getView();
-            ubo.inverseView = camera.getInverseView();
             pointLightSystem.update(frameInfo, ubo);
             uboBuffers[frameIndex]->writeToBuffer(&ubo);
             uboBuffers[frameIndex]->flush();

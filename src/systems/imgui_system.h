@@ -1,6 +1,7 @@
 #pragma once
 
 #include "../camera.h"
+#include "../first_person_movement_controller.h"
 #include "../game_object.h"
 #include "../window.h"
 
@@ -17,7 +18,8 @@ class ImguiSystem {
 
     void uploadFonts(VkCommandBuffer commandBuffer) const;
 
-    void preRender(Window *window, const Camera &camera, const GameObject &viewerObject);
+    void preRender(Window *window, const Camera &camera, const GameObject &viewerObject, FirstPersonMovementController cameraController,
+                   float startupTime);
 
     void render(VkCommandBuffer commandBuffer);
 };
