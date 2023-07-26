@@ -20,6 +20,10 @@ void Camera::setPerspectiveProjection(float fovy, float aspect, float near, floa
     projectionMatrix[2][2] = far / (far - near);
     projectionMatrix[2][3] = 1.f;
     projectionMatrix[3][2] = -(far * near) / (far - near);
+    //    projectionMatrix = glm::perspective(fovy, aspect, near, far);
+    //    projectionMatrix[2][2] = -projectionMatrix[2][2];
+    //    projectionMatrix[2][3] = -projectionMatrix[2][3];
+    //    //    projectionMatrix[1][1] *= -1;
 }
 
 void Camera::setViewDirection(glm::vec3 position, glm::vec3 direction, glm::vec3 up) {

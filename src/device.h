@@ -60,6 +60,12 @@ class Device {
     VkQueue getPresentQueue() {
         return presentQueue;
     }
+    VkInstance getInstance() {
+        return instance;
+    }
+    VkPhysicalDevice getPhysicalDevice() {
+        return physicalDevice;
+    }
 
     SwapChainSupportDetails getSwapChainSupport();
 

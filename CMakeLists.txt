@@ -28,16 +28,31 @@ target_compile_definitions(ashwga PRIVATE WIN32_LEAN_AND_MEAN NOMINMAX)
 add_library(glm INTERFACE)
 add_library(sdl2 INTERFACE)
 add_library(tinyobjloader INTERFACE)
+add_library(imgui STATIC)
 
 target_include_directories(glm INTERFACE external/glm)
 target_include_directories(tinyobjloader INTERFACE external/tinyobjloader)
+target_include_directories(imgui PUBLIC external/imgui)
 
 set(sdl2_DIR "external/SDL2")
 target_include_directories(sdl2 INTERFACE ${sdl2_DIR}/include ${sdl2_image_DIR}/include)
 target_link_directories(sdl2 INTERFACE ${sdl2_DIR}/lib/x64 ${sdl2_image_DIR}/lib/x64)
 target_link_libraries(sdl2 INTERFACE SDL2 SDL2main)
 
+target_sources(imgui PRIVATE
+        external/imgui/imgui.h
+        external/imgui/imgui.cpp
+        external/imgui/imgui_tables.cpp
+        external/imgui/imgui_demo.cpp
+        external/imgui/imgui_draw.cpp
+        external/imgui/imgui_widgets.cpp
+        external/imgui/imgui_impl_vulkan.cpp
+        external/imgui/imgui_impl_sdl2.cpp
+        )
+target_link_libraries(imgui PUBLIC Vulkan::Vulkan sdl2)
+
 target_link_libraries(ashwga
+        imgui
         tinyobjloader
         glm
         Vulkan::Vulkan

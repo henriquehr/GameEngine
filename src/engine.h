@@ -8,6 +8,7 @@
 #include "keyboard_movement_controller.h"
 #include "model.h"
 #include "renderer.h"
+#include "systems/imgui_system.h"
 #include "systems/point_light_system.h"
 #include "systems/simple_render_system.h"
 #include "window.h"
@@ -15,6 +16,8 @@
 #include <SDL.h>
 #include <glm/glm.hpp>
 #include <glm/gtc/constants.hpp>
+#include <imgui_impl_sdl2.h>
+#include <imgui_impl_vulkan.h>
 
 #include <chrono>
 #include <memory>
@@ -43,6 +46,9 @@ class Engine {
     GameObject::Map gameObjects{};
 
     void loadGameObjects();
+
+    VkDescriptorPool imguiPool{};
+    void init_imgui(const ImguiSystem &imguiSystem);
 
     // FPS and frame time
     using clock = std::chrono::system_clock;

@@ -9,7 +9,10 @@ Engine::Engine() {
     loadGameObjects();
 }
 
-Engine::~Engine() {}
+Engine::~Engine() {
+    vkDestroyDescriptorPool(device.getDevice(), imguiPool, nullptr);
+    ImGui_ImplVulkan_Shutdown();
+}
 
 void Engine::loadGameObjects() {
     std::shared_ptr<Model> model = Model::createModelFromFile(device, "../../models/smooth_vase.obj");
@@ -55,10 +58,10 @@ void Engine::loadGameObjects() {
 
 void Engine::run() {
     std::vector<std::unique_ptr<Buffer>> uboBuffers(SwapChain::MAX_FRAMES_IN_FLIGHT);
-    for (int i = 0; i < uboBuffers.size(); i++) {
-        uboBuffers[i] = std::make_unique<Buffer>(device, sizeof(GlobalUbo), 1, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
-                                                 VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT);
-        uboBuffers[i]->map();
+    for (auto &uboBuffer: uboBuffers) {
+        uboBuffer = std::make_unique<Buffer>(device, sizeof(GlobalUbo), 1, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
+                                             VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT);
+        uboBuffer->map();
     }
 
     std::unique_ptr<DescriptorSetLayout> globalSetLayout =
@@ -72,10 +75,13 @@ void Engine::run() {
 
     SimpleRenderSystem simpleRenderSystem{device, renderer.getSwapChainRenderPass(), globalSetLayout->getDescriptorSetLayout()};
     PointLightSystem pointLightSystem{device, renderer.getSwapChainRenderPass(), globalSetLayout->getDescriptorSetLayout()};
+    ImguiSystem imguiSystem{};
     Camera camera{};
     GameObject viewerObject = GameObject::createGameObject();
     viewerObject.transform.translation.z = -2.5;
     KeyboardMovementController cameraController{};
+
+    init_imgui(imguiSystem);
 
     std::cout << "Startup time: " << std::chrono::duration<float, std::chrono::seconds::period>(clock::now() - currentTime).count()
               << " seconds" << std::endl;
@@ -83,6 +89,7 @@ void Engine::run() {
     SDL_Event e;
     while (!quit) {
         while (SDL_PollEvent(&e)) {
+            ImGui_ImplSDL2_ProcessEvent(&e);
             if (e.type == SDL_QUIT) {
                 quit = true;
             } else if (e.type == SDL_KEYDOWN) {
@@ -109,6 +116,14 @@ void Engine::run() {
         float aspect = renderer.getAspectRatio();
         camera.setPerspectiveProjection(glm::radians(50.0f), aspect, 0.1f, 1000.0f);
 
+        //imgui new frame
+        ImGui_ImplVulkan_NewFrame();
+        ImGui_ImplSDL2_NewFrame(window.getSDLWindow());
+        ImGui::NewFrame();
+        //imgui commands
+        ImGui::ShowMetricsWindow();
+        ImGui::Render();
+
         if (VkCommandBuffer commandBuffer = renderer.beginFrame()) {
             int frameIndex = renderer.getFrameIndex();
             FrameInfo frameInfo{frameIndex, deltaTime, commandBuffer, camera, globalDescriptorSets[frameIndex], gameObjects};
@@ -124,6 +139,7 @@ void Engine::run() {
             renderer.beginSwapChainRenderPass(commandBuffer);
             simpleRenderSystem.renderGameObjects(frameInfo);
             pointLightSystem.render(frameInfo);
+            imguiSystem.render(commandBuffer);
             renderer.endSwapChainRenderPass(commandBuffer);
             renderer.endFrame();
         }
@@ -146,10 +162,63 @@ void Engine::fps() {
         title << "FPS:" << std::to_string(frameCount);
         title << "; CPU Time:" << std::format("{:.2f}", (deltaTime * 1000.0)) << "ms";
 
-        std::cout << title.str() << std::endl;
+        //        std::cout << title.str() << std::endl;
         SDL_SetWindowTitle(window.getSDLWindow(), title.str().c_str());
 
         frameCount = 0;
         lastUpdateTime = newTime;
+    }
+}
+
+void Engine::init_imgui(const ImguiSystem &imguiSystem) {
+    //1: create descriptor pool for IMGUI
+    // the size of the pool is very oversize, but it's copied from imgui demo itself.
+    VkDescriptorPoolSize pool_sizes[] = {{VK_DESCRIPTOR_TYPE_SAMPLER, 1000},
+                                         {VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1000},
+                                         {VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE, 1000},
+                                         {VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, 1000},
+                                         {VK_DESCRIPTOR_TYPE_UNIFORM_TEXEL_BUFFER, 1000},
+                                         {VK_DESCRIPTOR_TYPE_STORAGE_TEXEL_BUFFER, 1000},
+                                         {VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1000},
+                                         {VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, 1000},
+                                         {VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC, 1000},
+                                         {VK_DESCRIPTOR_TYPE_STORAGE_BUFFER_DYNAMIC, 1000},
+                                         {VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT, 1000}};
+
+    VkDescriptorPoolCreateInfo pool_info = {};
+    pool_info.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
+    pool_info.flags = VK_DESCRIPTOR_POOL_CREATE_FREE_DESCRIPTOR_SET_BIT;
+    pool_info.maxSets = 1000;
+    pool_info.poolSizeCount = std::size(pool_sizes);
+    pool_info.pPoolSizes = pool_sizes;
+
+    VK_CHECK(vkCreateDescriptorPool(device.getDevice(), &pool_info, nullptr, &imguiPool));
+
+    // 2: initialize imgui library
+    //this initializes the core structures of imgui
+    ImGui::CreateContext();
+
+    //this initializes imgui for SDL
+    ImGui_ImplSDL2_InitForVulkan(window.getSDLWindow());
+
+    //this initializes imgui for Vulkan
+    ImGui_ImplVulkan_InitInfo init_info = {};
+    init_info.Instance = device.getInstance();
+    init_info.PhysicalDevice = device.getPhysicalDevice();
+    init_info.Device = device.getDevice();
+    init_info.Queue = device.getGraphicsQueue();
+    init_info.DescriptorPool = imguiPool;
+    init_info.MinImageCount = 3;
+    init_info.ImageCount = 3;
+    init_info.MSAASamples = VK_SAMPLE_COUNT_1_BIT;
+
+    ImGui_ImplVulkan_Init(&init_info, renderer.getSwapChainRenderPass());
+
+    if (VkCommandBuffer commandBuffer = renderer.beginFrame()) {
+        imguiSystem.uploadFonts(commandBuffer);
+        renderer.beginSwapChainRenderPass(commandBuffer);
+        renderer.endSwapChainRenderPass(commandBuffer);
+        renderer.endFrame();
+        //        ImGui_ImplVulkan_DestroyFontUploadObjects();
     }
 }
