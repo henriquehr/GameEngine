@@ -50,7 +50,6 @@ void PointLightSystem::createPipeline(VkRenderPass renderPass) {
 }
 
 void PointLightSystem::update(FrameInfo frameInfo, GlobalUbo &ubo) {
-    glm::mat4 rotateLight = glm::rotate(glm::mat4(1.0f), frameInfo.frameTime, {0.0f, -1.0f, 0.0f});
     int lightIndex = 0;
     for (auto &kv: frameInfo.gameObjects) {
         GameObject &obj = kv.second;
@@ -60,7 +59,7 @@ void PointLightSystem::update(FrameInfo frameInfo, GlobalUbo &ubo) {
 
         assert(lightIndex < MAX_LIGHTS && "Point lights exceed maximum specified");
 
-        obj.transform.translation = glm::vec3(rotateLight * glm::vec4(obj.transform.translation, 1.0f));
+        obj.transform.translation = glm::vec3(glm::vec4(obj.transform.translation, 1.0f));
 
         ubo.potinLights[lightIndex].position = glm::vec4(obj.transform.translation, 1.0f);
         ubo.potinLights[lightIndex].color = glm::vec4(obj.color, obj.pointLight->lightIntensity);

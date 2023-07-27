@@ -44,16 +44,10 @@ void Engine::loadGameObjects() {
     floor.transform.scale = glm::vec3(3.0f, 1.0f, 3.0f);
     gameObjects.emplace(floor.getId(), std::move(floor));
 
-    std::vector<glm::vec3> lightColors{
-            {1.f, .1f, .1f}, {.1f, .1f, 1.f}, {.1f, 1.f, .1f}, {1.f, 1.f, .1f}, {.1f, 1.f, 1.f}, {1.f, 1.f, 1.f}//
-    };
-    for (int i = 0; i < lightColors.size(); i++) {
-        GameObject pointLight = GameObject::makePointLight(0.2f);
-        pointLight.color = lightColors[i];
-        glm::mat4 rotateLight = glm::rotate(glm::mat4(1.0f), (i * glm::two_pi<float>()) / lightColors.size(), {0.0f, -1.0f, 0.0f});
-        pointLight.transform.translation = glm::vec3(rotateLight * glm::vec4(-1.0f, -1.0f, -1.0f, 1.0f));
-        gameObjects.emplace(pointLight.getId(), std::move(pointLight));
-    }
+    GameObject pointLight = GameObject::makePointLight(1.8f);
+    pointLight.color = {1.0f, 1.0f, 1.0f};
+    pointLight.transform.translation = glm::vec3(-1.5f, -2.0f, -1.0f);
+    gameObjects.emplace(pointLight.getId(), std::move(pointLight));
 }
 
 void Engine::run() {
@@ -103,7 +97,13 @@ void Engine::run() {
                 window.setFramebufferResized();
                 window.setWidth(e.window.data1);
                 window.setHeight(e.window.data2);
-            } else if (e.type == SDL_MOUSEMOTION) {
+            } else if (e.type == SDL_WINDOWEVENT && e.window.event == SDL_WINDOWEVENT_FOCUS_GAINED &&
+                       e.window.windowID == SDL_GetWindowID(window.getSDLWindow())) {
+                window.setFocused(true);
+            } else if (e.type == SDL_WINDOWEVENT && e.window.event == SDL_WINDOWEVENT_FOCUS_LOST &&
+                       e.window.windowID == SDL_GetWindowID(window.getSDLWindow())) {
+                window.setFocused(false);
+            } else if (e.type == SDL_MOUSEMOTION && window.isFocused()) {
                 cameraController.setPitchYaw(e.motion.yrel, e.motion.xrel);
             }
         }
@@ -113,10 +113,8 @@ void Engine::run() {
         }
 
         cameraController.move(deltaTime, viewerObject);
-        camera.setView(viewerObject.transform.translation, cameraController.getMouseRotation());
-
-        float aspect = renderer.getAspectRatio();
-        camera.setPerspectiveProjection(glm::radians(50.0f), aspect, 0.1f, 1000.0f);
+        camera.setView(viewerObject.transform.translation, cameraController.getRotationMatrix());
+        camera.setPerspectiveProjection(glm::radians(60.0f), renderer.getAspectRatio(), 0.1f, 1000.0f);
 
         imguiSystem.preRender(&window, camera, viewerObject, cameraController, startupTime);
 

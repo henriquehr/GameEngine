@@ -35,6 +35,12 @@ class Window {
     void setFramebufferResized() {
         framebufferResized = true;
     }
+    void setFocused(bool focused) {
+        this->focused = focused;
+    }
+    bool isFocused() {
+        return focused;
+    }
 
     void createWindowSurface(VkInstance instance, VkSurfaceKHR *surface);
 
@@ -44,6 +50,7 @@ class Window {
     int width{};
     int height{};
     bool framebufferResized = false;
+    bool focused = false;
 
     void initWindow();
 };

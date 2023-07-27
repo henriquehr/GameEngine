@@ -17,19 +17,19 @@ class FirstPersonMovementController {
     KeyMappings keys{};
     float moveSpeed{5.0f};
     float lookSpeed{0.005f};
-    float pitch = 0;
-    float yaw = 0;
-    glm::mat4 mouseRotation;
+    float pitch = 0;// up-down rotation
+    float yaw = 0;  // left-right rotation
+    glm::mat4 rotationMatrix{1};
 
     void setPitchYaw(int pitch, int yaw) {
         this->pitch += pitch * lookSpeed;
-        this->yaw -= yaw * lookSpeed;
+        this->yaw += yaw * lookSpeed;
     }
-    glm::mat4 getMouseRotation() {
-        return mouseRotation;
+    glm::mat4 getRotationMatrix() {
+        return rotationMatrix;
     }
 
-    glm::mat4 updateMouseRotation();
+    glm::mat4 updateRotationMatrix();
 
     void move(float deltaTime, GameObject &gameObject);
 };
