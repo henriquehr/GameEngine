@@ -61,8 +61,8 @@ void PointLightSystem::update(FrameInfo frameInfo, GlobalUbo &ubo) {
 
         obj.transform.translation = glm::vec3(glm::vec4(obj.transform.translation, 1.0f));
 
-        ubo.potinLights[lightIndex].position = glm::vec4(obj.transform.translation, 1.0f);
-        ubo.potinLights[lightIndex].color = glm::vec4(obj.color, obj.pointLight->lightIntensity);
+        ubo.pointLights[lightIndex].position = glm::vec4(obj.transform.translation, 1.0f);
+        ubo.pointLights[lightIndex].color = glm::vec4(obj.color, obj.pointLight->lightIntensity);
         lightIndex += 1;
     }
     ubo.activeLights = lightIndex;
