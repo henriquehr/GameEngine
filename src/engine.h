@@ -11,6 +11,8 @@
 #include "systems/imgui_system.h"
 #include "systems/point_light_system.h"
 #include "systems/simple_render_system.h"
+#include "systems/texture_render_system.h"
+#include "texture.h"
 #include "window.h"
 
 #include <SDL.h>
@@ -41,9 +43,11 @@ class Engine {
     Window window{WIDTH, HEIGHT};
     Device device{window};
     Renderer renderer{window, device};
+    Texture texture{device, "../../textures/viking_room.png"};
 
     std::unique_ptr<DescriptorPool> globalPool{};
     GameObject::Map gameObjects{};
+    GameObject::Map textureGameObjects{};
 
     void loadGameObjects();
 

@@ -5,6 +5,7 @@ Engine::Engine() {
     globalPool = DescriptorPool::Builder(device)
                          .setMaxSets(SwapChain::MAX_FRAMES_IN_FLIGHT)
                          .addPoolSize(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, SwapChain::MAX_FRAMES_IN_FLIGHT)
+                         .addPoolSize(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, SwapChain::MAX_FRAMES_IN_FLIGHT)
                          .build();
     loadGameObjects();
 }
@@ -22,12 +23,13 @@ void Engine::loadGameObjects() {
     vase.transform.scale = glm::vec3(1.0f, 0.5f, 1.0f);
     gameObjects.emplace(vase.getId(), std::move(vase));
 
-    model = Model::createModelFromFile(device, "../../models/colored_cube.obj");
-    GameObject cube = GameObject::createGameObject();
-    cube.model = model;
-    cube.transform.translation = {0.5f, 0.3f, 0.0f};
-    cube.transform.scale = glm::vec3(0.2f);
-    gameObjects.emplace(cube.getId(), std::move(cube));
+    model = Model::createModelFromFile(device, "../../models/viking_room.obj");
+    GameObject texture = GameObject::createGameObject();
+    texture.model = model;
+    texture.transform.translation = {0.5f, 0.3f, 0.0f};
+    texture.transform.rotation = {glm::radians(90.0f), 0.0f, glm::radians(-180.0f)};
+    texture.transform.scale = glm::vec3(0.2f);
+    textureGameObjects.emplace(texture.getId(), std::move(texture));
 
     model = Model::createModelFromFile(device, "../../models/pirate.obj");
     GameObject pirate = GameObject::createGameObject();
@@ -59,15 +61,23 @@ void Engine::run() {
     }
 
     std::unique_ptr<DescriptorSetLayout> globalSetLayout =
-            DescriptorSetLayout::Builder(device).addBinding(0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_ALL_GRAPHICS).build();
+            DescriptorSetLayout::Builder(device)
+                    .addBinding(0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_ALL_GRAPHICS)
+                    .addBinding(1, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT)
+                    .build();
 
     std::vector<VkDescriptorSet> globalDescriptorSets(SwapChain::MAX_FRAMES_IN_FLIGHT);
     for (int i = 0; i < globalDescriptorSets.size(); i++) {
         VkDescriptorBufferInfo bufferInfo = uboBuffers[i]->descriptorInfo();
-        DescriptorWriter(*globalSetLayout, *globalPool).writeBuffer(0, &bufferInfo).build(globalDescriptorSets[i]);
+        VkDescriptorImageInfo imageInfo = texture.getDescriptorInfo(texture.getTextureImageView(), texture.getTextureSampler());
+        DescriptorWriter(*globalSetLayout, *globalPool)
+                .writeBuffer(0, &bufferInfo)
+                .writeImage(1, &imageInfo)
+                .build(globalDescriptorSets[i]);
     }
 
     SimpleRenderSystem simpleRenderSystem{device, renderer.getSwapChainRenderPass(), globalSetLayout->getDescriptorSetLayout()};
+    TextureRenderSystem textureRenderSystem{device, renderer.getSwapChainRenderPass(), globalSetLayout->getDescriptorSetLayout()};
     PointLightSystem pointLightSystem{device, renderer.getSwapChainRenderPass(), globalSetLayout->getDescriptorSetLayout()};
     ImguiSystem imguiSystem{};
     Camera camera{};
@@ -121,6 +131,7 @@ void Engine::run() {
         if (VkCommandBuffer commandBuffer = renderer.beginFrame()) {
             int frameIndex = renderer.getFrameIndex();
             FrameInfo frameInfo{frameIndex, deltaTime, commandBuffer, camera, globalDescriptorSets[frameIndex], gameObjects};
+            FrameInfo textureFrameInfo{frameIndex, deltaTime, commandBuffer, camera, globalDescriptorSets[frameIndex], textureGameObjects};
             // update
             GlobalUbo ubo{};
             ubo.projection = camera.getProjection();
@@ -131,6 +142,7 @@ void Engine::run() {
             //render
             renderer.beginSwapChainRenderPass(commandBuffer);
             simpleRenderSystem.renderGameObjects(frameInfo);
+            textureRenderSystem.renderGameObjects(textureFrameInfo);
             pointLightSystem.render(frameInfo);
             imguiSystem.render(commandBuffer);
             renderer.endSwapChainRenderPass(commandBuffer);

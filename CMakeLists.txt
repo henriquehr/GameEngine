@@ -16,7 +16,7 @@ add_executable(ashwga
         ${CPP_SOURCE_FILES}
         ${GLSL_SOURCE_FILES}
         ${GLSL_HEADER_FILES}
-        )
+)
 
 set_target_properties(ashwga PROPERTIES CXX_STANDARD 20 CXX_STANDARD_REQUIRED YES CXX_EXTENSIONS NO)
 
@@ -28,10 +28,12 @@ target_compile_definitions(ashwga PRIVATE WIN32_LEAN_AND_MEAN NOMINMAX)
 add_library(glm INTERFACE)
 add_library(sdl2 INTERFACE)
 add_library(tinyobjloader INTERFACE)
+add_library(stb INTERFACE)
 add_library(imgui STATIC)
 
 target_include_directories(glm INTERFACE external/glm)
 target_include_directories(tinyobjloader INTERFACE external/tinyobjloader)
+target_include_directories(stb INTERFACE external/stb)
 target_include_directories(imgui PUBLIC external/imgui)
 
 set(sdl2_DIR "external/SDL2")
@@ -48,16 +50,17 @@ target_sources(imgui PRIVATE
         external/imgui/imgui_widgets.cpp
         external/imgui/imgui_impl_vulkan.cpp
         external/imgui/imgui_impl_sdl2.cpp
-        )
+)
 target_link_libraries(imgui PUBLIC Vulkan::Vulkan sdl2)
 
 target_link_libraries(ashwga
+        stb
         imgui
         tinyobjloader
         glm
         Vulkan::Vulkan
         sdl2
-        )
+)
 
 set(GLSL_VALIDATOR "$ENV{VULKAN_SDK}/Bin/glslangValidator.exe")
 set(SPIRV_OUTPUT_DIR "${PROJECT_SOURCE_DIR}/shaders/compiled/")
