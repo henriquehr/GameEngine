@@ -2,6 +2,7 @@
 
 #include "buffer.h"
 #include "device.h"
+#include "texture.h"
 #include "utils.h"
 
 #include <glm/glm.hpp>
@@ -36,17 +37,25 @@ class Model {
         void loadModel(const std::string &filePath);
     };
 
-    Model(Device &device, const Model::Data &data);
-    ~Model();
-
     Model(const Model &) = delete;
     Model &operator=(const Model &) = delete;
+
+    Model(Device &device, const Model::Data &data);
+    ~Model();
 
     static std::unique_ptr<Model> createModelFromFile(Device &device, const std::string &filePath);
 
     void bind(VkCommandBuffer commandBuffer);
 
     void draw(VkCommandBuffer commandBuffer);
+
+    void setTexture(std::shared_ptr<Texture> texture) {
+        this->texture = std::move(texture);
+    }
+
+    std::shared_ptr<Texture> getTexture() {
+        return texture;
+    }
 
   private:
     Device &device;
@@ -57,6 +66,8 @@ class Model {
     bool hasIndexBuffer = false;
     std::unique_ptr<Buffer> indexBuffer{};
     uint32_t indexCount{};
+
+    std::shared_ptr<Texture> texture{};
 
     void createVertexBuffer(const std::vector<Vertex> &vertices);
     void createIndexBuffer(const std::vector<uint32_t> &indices);

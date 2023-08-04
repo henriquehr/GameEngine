@@ -1,10 +1,17 @@
 
 #include "texture.h"
 
-Texture::Texture(Device &device, std::string path) : device(device) {
+Texture::Texture(Device &device, const std::string &path) : device(device) {
     createTextureImage(path);
     createTextureImageView();
     createTextureSampler();
+    buildDescriptorImageInfo();
+}
+Texture::Texture(Device &device) : device(device) {
+    createDefaultTextureImage();
+    createTextureImageView();
+    createTextureSampler();
+    buildDescriptorImageInfo();
 }
 
 Texture::~Texture() {
@@ -14,7 +21,7 @@ Texture::~Texture() {
     vkFreeMemory(device.getDevice(), textureImageMemory, nullptr);
 }
 
-void Texture::createTextureImage(std::string path) {
+void Texture::createTextureImage(const std::string &path) {
     int texWidth, texHeight, texChannels;
     stbi_set_flip_vertically_on_load(true);
     stbi_uc *pixels = stbi_load(path.c_str(), &texWidth, &texHeight, &texChannels, STBI_rgb_alpha);
@@ -61,6 +68,70 @@ void Texture::createTextureImage(std::string path) {
     vkFreeMemory(device.getDevice(), stagingBufferMemory, nullptr);
 
     generateMipmaps(textureImage, VK_FORMAT_R8G8B8A8_SRGB, texWidth, texHeight, mipLevels);
+}
+
+void Texture::createDefaultTextureImage() {
+    const int texDimension = 16;
+    const int channels = 4;
+    const VkDeviceSize imageSize = texDimension * texDimension * channels;
+    unsigned char pixels[imageSize];
+
+    mipLevels = static_cast<uint32_t>(std::floor(std::log2(std::max(texDimension, texDimension)))) + 1;
+
+    // Checkerboard pattern
+    //    for (int row = 0; row < texDimension; ++row) {
+    //        for (int col = 0; col < texDimension; ++col) {
+    //            int index = (row * texDimension) + col;
+    //            int index_bpp = index * channels;
+    //            if (row % 2) {
+    //                if (col % 2) {
+    //                    pixels[index_bpp + 0] = 0;
+    //                    pixels[index_bpp + 1] = 0;
+    //                    pixels[index_bpp + 2] = 0;
+    //                }
+    //            } else {
+    //                if (!(col % 2)) {
+    //                    pixels[index_bpp + 0] = 0;
+    //                    pixels[index_bpp + 1] = 0;
+    //                    pixels[index_bpp + 2] = 0;
+    //                }
+    //            }
+    //        }
+    //    }
+    VkBuffer stagingBuffer;
+    VkDeviceMemory stagingBufferMemory;
+    device.createBuffer(imageSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
+                        VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, stagingBuffer, stagingBufferMemory);
+
+    void *data;
+    vkMapMemory(device.getDevice(), stagingBufferMemory, 0, imageSize, 0, &data);
+    memcpy(data, pixels, static_cast<size_t>(imageSize));
+    vkUnmapMemory(device.getDevice(), stagingBufferMemory);
+
+    VkImageCreateInfo imageInfo{};
+    imageInfo.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
+    imageInfo.imageType = VK_IMAGE_TYPE_2D;
+    imageInfo.extent.width = texDimension;
+    imageInfo.extent.height = texDimension;
+    imageInfo.extent.depth = 1;
+    imageInfo.mipLevels = mipLevels;
+    imageInfo.arrayLayers = 1;
+    imageInfo.format = VK_FORMAT_R8G8B8A8_SRGB;
+    imageInfo.tiling = VK_IMAGE_TILING_OPTIMAL;
+    imageInfo.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+    imageInfo.usage = VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT;
+    imageInfo.samples = VK_SAMPLE_COUNT_1_BIT;
+    imageInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
+
+    device.createImageWithInfo(imageInfo, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, textureImage, textureImageMemory);
+
+    transitionImageLayout(textureImage, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, mipLevels);
+    device.copyBufferToImage(stagingBuffer, textureImage, static_cast<uint32_t>(texDimension), static_cast<uint32_t>(texDimension), 1);
+
+    vkDestroyBuffer(device.getDevice(), stagingBuffer, nullptr);
+    vkFreeMemory(device.getDevice(), stagingBufferMemory, nullptr);
+
+    generateMipmaps(textureImage, VK_FORMAT_R8G8B8A8_SRGB, texDimension, texDimension, mipLevels);
 }
 
 void Texture::generateMipmaps(VkImage image, VkFormat imageFormat, int32_t texWidth, int32_t texHeight, uint32_t mipLevels) {

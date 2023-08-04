@@ -16,6 +16,7 @@ namespace std {
 Model::Model(Device &device, const Model::Data &data) : device(device) {
     createVertexBuffer(data.vertices);
     createIndexBuffer(data.indices);
+    texture = std::make_unique<Texture>(device);
 }
 
 Model::~Model() {}

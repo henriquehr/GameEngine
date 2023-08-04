@@ -88,7 +88,7 @@ class DescriptorWriter {
 
     DescriptorWriter &writeBuffer(uint32_t binding, VkDescriptorBufferInfo *bufferInfo);
 
-    DescriptorWriter &writeImage(uint32_t binding, VkDescriptorImageInfo *imageInfo);
+    DescriptorWriter &writeImage(uint32_t binding, VkDescriptorImageInfo *imageInfos);
 
     bool build(VkDescriptorSet &set);
 

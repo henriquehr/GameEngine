@@ -3,9 +3,9 @@
 
 Engine::Engine() {
     globalPool = DescriptorPool::Builder(device)
-                         .setMaxSets(SwapChain::MAX_FRAMES_IN_FLIGHT)
-                         .addPoolSize(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, SwapChain::MAX_FRAMES_IN_FLIGHT)
-                         .addPoolSize(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, SwapChain::MAX_FRAMES_IN_FLIGHT)
+                         .setMaxSets(SwapChain::MAX_FRAMES_IN_FLIGHT + 500)
+                         .addPoolSize(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, SwapChain::MAX_FRAMES_IN_FLIGHT + 500)
+                         .addPoolSize(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, SwapChain::MAX_FRAMES_IN_FLIGHT + 500)
                          .build();
     loadGameObjects();
 }
@@ -24,12 +24,21 @@ void Engine::loadGameObjects() {
     gameObjects.emplace(vase.getId(), std::move(vase));
 
     model = Model::createModelFromFile(device, "../../models/viking_room.obj");
-    GameObject texture = GameObject::createGameObject();
-    texture.model = model;
-    texture.transform.translation = {0.5f, 0.3f, 0.0f};
-    texture.transform.rotation = {glm::radians(90.0f), 0.0f, glm::radians(-180.0f)};
-    texture.transform.scale = glm::vec3(0.2f);
-    textureGameObjects.emplace(texture.getId(), std::move(texture));
+    model->setTexture(std::make_unique<Texture>(device, "../../textures/viking_room.png"));
+    GameObject viking_room = GameObject::createGameObject();
+    viking_room.model = model;
+    viking_room.transform.translation = {0.5f, 0.3f, 0.0f};
+    viking_room.transform.rotation = {glm::radians(90.0f), 0.0f, glm::radians(-180.0f)};
+    viking_room.transform.scale = glm::vec3(0.2f);
+    gameObjects.emplace(viking_room.getId(), std::move(viking_room));
+
+    model = Model::createModelFromFile(device, "../../models/lost_empire.obj");
+    model->setTexture(std::make_unique<Texture>(device, "../../textures/lost_empire-RGBA.png"));
+    GameObject lost_empire = GameObject::createGameObject();
+    lost_empire.model = model;
+    lost_empire.transform.translation = {0.0f, -10.0f, 0.0f};
+    lost_empire.transform.scale = glm::vec3(1.0f, 1.0f, 1.0f);
+    gameObjects.emplace(lost_empire.getId(), std::move(lost_empire));
 
     model = Model::createModelFromFile(device, "../../models/pirate.obj");
     GameObject pirate = GameObject::createGameObject();
@@ -47,36 +56,47 @@ void Engine::loadGameObjects() {
     gameObjects.emplace(floor.getId(), std::move(floor));
 
     GameObject pointLight = GameObject::makePointLight(1.8f);
-    pointLight.color = {1.0f, 1.0f, 1.0f};
-    pointLight.transform.translation = glm::vec3(-1.5f, -2.0f, -1.0f);
+    pointLight.color = {1.0f, 0.4f, 0.4f};
+    pointLight.transform.translation = glm::vec3(-1.5f, -1.6f, -1.0f);
     gameObjects.emplace(pointLight.getId(), std::move(pointLight));
 }
 
 void Engine::run() {
-    std::vector<std::unique_ptr<Buffer>> uboBuffers(SwapChain::MAX_FRAMES_IN_FLIGHT);
+    // buffer for each frame (2)
+    std::vector<std::shared_ptr<Buffer>> uboBuffers(SwapChain::MAX_FRAMES_IN_FLIGHT);
     for (auto &uboBuffer: uboBuffers) {
-        uboBuffer = std::make_unique<Buffer>(device, sizeof(GlobalUbo), 1, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
+        uboBuffer = std::make_shared<Buffer>(device, sizeof(GlobalUbo), 1, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
                                              VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT);
         uboBuffer->map();
     }
 
+    std::vector<VkDescriptorImageInfo> descriptorImageInfos;
+    int imageIndex = 0;
+    for (std::pair<const GameObject::id_t, GameObject> &kv: gameObjects) {
+        if (kv.second.pointLight != nullptr) {
+            continue;
+        }
+        descriptorImageInfos.push_back(kv.second.model->getTexture()->getDescriptorImageInfo());
+        kv.second.textureIndex = imageIndex++;
+    }
+
+    // bind 0 = buffer, bind 1 = all textures (count = imageIndex)
     std::unique_ptr<DescriptorSetLayout> globalSetLayout =
             DescriptorSetLayout::Builder(device)
                     .addBinding(0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_ALL_GRAPHICS)
-                    .addBinding(1, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT)
+                    .addBinding(1, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, imageIndex)
                     .build();
 
+    // descriptor set for each frame (2) binding 0 = buffer, binding 1 = all textures
     std::vector<VkDescriptorSet> globalDescriptorSets(SwapChain::MAX_FRAMES_IN_FLIGHT);
     for (int i = 0; i < globalDescriptorSets.size(); i++) {
         VkDescriptorBufferInfo bufferInfo = uboBuffers[i]->descriptorInfo();
-        VkDescriptorImageInfo imageInfo = texture.getDescriptorInfo(texture.getTextureImageView(), texture.getTextureSampler());
         DescriptorWriter(*globalSetLayout, *globalPool)
                 .writeBuffer(0, &bufferInfo)
-                .writeImage(1, &imageInfo)
+                .writeImage(1, descriptorImageInfos.data())
                 .build(globalDescriptorSets[i]);
     }
 
-    SimpleRenderSystem simpleRenderSystem{device, renderer.getSwapChainRenderPass(), globalSetLayout->getDescriptorSetLayout()};
     TextureRenderSystem textureRenderSystem{device, renderer.getSwapChainRenderPass(), globalSetLayout->getDescriptorSetLayout()};
     PointLightSystem pointLightSystem{device, renderer.getSwapChainRenderPass(), globalSetLayout->getDescriptorSetLayout()};
     ImguiSystem imguiSystem{};
@@ -131,7 +151,6 @@ void Engine::run() {
         if (VkCommandBuffer commandBuffer = renderer.beginFrame()) {
             int frameIndex = renderer.getFrameIndex();
             FrameInfo frameInfo{frameIndex, deltaTime, commandBuffer, camera, globalDescriptorSets[frameIndex], gameObjects};
-            FrameInfo textureFrameInfo{frameIndex, deltaTime, commandBuffer, camera, globalDescriptorSets[frameIndex], textureGameObjects};
             // update
             GlobalUbo ubo{};
             ubo.projection = camera.getProjection();
@@ -141,8 +160,7 @@ void Engine::run() {
             uboBuffers[frameIndex]->flush();
             //render
             renderer.beginSwapChainRenderPass(commandBuffer);
-            simpleRenderSystem.renderGameObjects(frameInfo);
-            textureRenderSystem.renderGameObjects(textureFrameInfo);
+            textureRenderSystem.renderGameObjects(frameInfo);
             pointLightSystem.render(frameInfo);
             imguiSystem.render(commandBuffer);
             renderer.endSwapChainRenderPass(commandBuffer);

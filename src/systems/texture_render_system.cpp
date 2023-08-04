@@ -4,9 +4,11 @@
 struct TexturePushConstantData {
     glm::mat4 modelMatrix{1.0f};
     glm::mat4 normalMatrix{1.0f};
+    int textureIndex = 0;
 };
 
 TextureRenderSystem::TextureRenderSystem(Device &device, VkRenderPass renderPass, VkDescriptorSetLayout globalSetLayout) : device(device) {
+    std::cout << "TexturePushConstantData size: " << sizeof(TexturePushConstantData) << std::endl;
     createPipelineLayout(globalSetLayout);
     createPipeline(renderPass);
 }
@@ -56,13 +58,14 @@ void TextureRenderSystem::renderGameObjects(FrameInfo frameInfo) {
 
     for (std::pair<const GameObject::id_t, GameObject> &kv: frameInfo.gameObjects) {
         GameObject &obj = kv.second;
-        if (obj.model == nullptr) {
+        if (obj.pointLight != nullptr) {
             continue;
         }
 
         TexturePushConstantData push{};
         push.modelMatrix = obj.transform.mat4();
         push.normalMatrix = obj.transform.normalMatrix();
+        push.textureIndex = obj.textureIndex;
 
         vkCmdPushConstants(frameInfo.commandBuffer, pipelineLayout, VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT, 0,
                            sizeof(TexturePushConstantData), &push);

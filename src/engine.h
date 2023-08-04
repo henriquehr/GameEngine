@@ -47,7 +47,6 @@ class Engine {
 
     std::unique_ptr<DescriptorPool> globalPool{};
     GameObject::Map gameObjects{};
-    GameObject::Map textureGameObjects{};
 
     void loadGameObjects();
 

@@ -7,6 +7,7 @@ struct SimplePushConstantData {
 };
 
 SimpleRenderSystem::SimpleRenderSystem(Device &device, VkRenderPass renderPass, VkDescriptorSetLayout globalSetLayout) : device(device) {
+    std::cout << "SimplePushConstantData size: " << sizeof(SimplePushConstantData) << std::endl;
     createPipelineLayout(globalSetLayout);
     createPipeline(renderPass);
 }

@@ -1,9 +1,10 @@
 #version 450
 
 #extension GL_GOOGLE_include_directive: require
+#extension GL_EXT_nonuniform_qualifier: require
 #include "common.h"
 
-layout (binding = 1) uniform sampler2D texSampler;
+layout (binding = 1) uniform sampler2D texSampler[];
 
 layout (location = 0) in vec3 fragColor;
 layout (location = 1) in vec3 fragPosWorld;
@@ -15,6 +16,7 @@ layout (location = 0) out vec4 outColor;
 layout(push_constant) uniform Push {
     mat4 modelMatrix;
     mat4 normalMatrix;
+    int textureIndex;
 } push;
 
 void main() {
@@ -43,5 +45,5 @@ void main() {
         specularLight += intensity * blinnTerm;
     }
 
-    outColor = vec4((diffuseLight * fragColor + specularLight * fragColor) + texture(texSampler, fragTexCoord).xyz, 1.0);
+    outColor = vec4((diffuseLight * fragColor + specularLight * fragColor) + texture(texSampler[push.textureIndex], fragTexCoord).xyz, 1.0);
 }

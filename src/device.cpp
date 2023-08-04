@@ -60,7 +60,7 @@ void Device::createInstance() {
     appInfo.applicationVersion = VK_MAKE_VERSION(1, 0, 0);
     appInfo.pEngineName = "Engine";
     appInfo.engineVersion = VK_MAKE_VERSION(1, 0, 0);
-    appInfo.apiVersion = VK_API_VERSION_1_0;
+    appInfo.apiVersion = VK_API_VERSION_1_3;
 
     VkInstanceCreateInfo createInfo = {};
     createInfo.sType = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO;
@@ -110,6 +110,7 @@ void Device::pickPhysicalDevice() {
 
     vkGetPhysicalDeviceProperties(physicalDevice, &properties);
     std::cout << "Physical device: " << properties.deviceName << std::endl;
+    std::cout << "Physical device maxPushConstantsSize: " << properties.limits.maxPushConstantsSize << std::endl;
 }
 
 void Device::createLogicalDevice() {
@@ -131,6 +132,10 @@ void Device::createLogicalDevice() {
     VkPhysicalDeviceFeatures deviceFeatures = {};
     deviceFeatures.samplerAnisotropy = VK_TRUE;
 
+    VkPhysicalDeviceVulkan12Features deviceFeatures12 = {VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_2_FEATURES};
+    deviceFeatures12.runtimeDescriptorArray = VK_TRUE;
+    deviceFeatures12.descriptorIndexing = VK_TRUE;
+
     VkDeviceCreateInfo createInfo = {};
     createInfo.sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;
 
@@ -149,6 +154,8 @@ void Device::createLogicalDevice() {
     } else {
         createInfo.enabledLayerCount = 0;
     }
+
+    createInfo.pNext = &deviceFeatures12;
 
     VK_CHECK(vkCreateDevice(physicalDevice, &createInfo, nullptr, &device));
 

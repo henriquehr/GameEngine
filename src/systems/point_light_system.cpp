@@ -8,6 +8,7 @@ struct PointLightPushConstants {
 };
 
 PointLightSystem::PointLightSystem(Device &device, VkRenderPass renderPass, VkDescriptorSetLayout globalSetLayout) : device(device) {
+    std::cout << "PointLightPushConstants size: " << sizeof(PointLightPushConstants) << std::endl;
     createPipelineLayout(globalSetLayout);
     createPipeline(renderPass);
 }

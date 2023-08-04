@@ -11,7 +11,11 @@
 
 class Texture {
   public:
-    Texture(Device &device, std::string path);
+    Texture(const Texture &) = delete;
+    Texture &operator=(const Texture &) = delete;
+
+    Texture(Device &device, const std::string &path);
+    Texture(Device &device);
 
     ~Texture();
 
@@ -27,24 +31,23 @@ class Texture {
     VkSampler getTextureSampler() {
         return textureSampler;
     }
-    VkDescriptorImageInfo getDescriptorInfo(VkImageView textureImageView, VkSampler textureSampler) {
-        return VkDescriptorImageInfo{
-                textureSampler,
-                textureImageView,
-                VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
-        };
+    VkDescriptorImageInfo getDescriptorImageInfo() {
+        return descriptorImageInfo;
     }
 
   private:
     Device &device;
 
-    uint32_t mipLevels;
-    VkImage textureImage;
-    VkDeviceMemory textureImageMemory;
-    VkImageView textureImageView;
-    VkSampler textureSampler;
+    uint32_t mipLevels{};
+    VkImage textureImage{};
+    VkDeviceMemory textureImageMemory{};
+    VkImageView textureImageView{};
+    VkSampler textureSampler{};
+    VkDescriptorImageInfo descriptorImageInfo{};
 
-    void createTextureImage(std::string path);
+    void createTextureImage(const std::string &path);
+
+    void createDefaultTextureImage();
 
     VkImageView createImageView(VkImage image, VkFormat format, VkImageAspectFlags aspectFlags, uint32_t mipLevels);
 
@@ -55,4 +58,12 @@ class Texture {
     void generateMipmaps(VkImage image, VkFormat imageFormat, int32_t texWidth, int32_t texHeight, uint32_t mipLevels);
 
     void transitionImageLayout(VkImage image, VkImageLayout oldLayout, VkImageLayout newLayout, uint32_t mipLevels);
+
+    void buildDescriptorImageInfo() {
+        descriptorImageInfo = VkDescriptorImageInfo{
+                textureSampler,
+                textureImageView,
+                VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
+        };
+    }
 };

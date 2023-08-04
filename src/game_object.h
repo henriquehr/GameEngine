@@ -39,6 +39,8 @@ class GameObject {
     std::shared_ptr<Model> model{};
     std::unique_ptr<PointLightComponent> pointLight = nullptr;
 
+    int textureIndex = 0;
+
     static GameObject createGameObject() {
         static id_t currentId = 0;
         return GameObject{currentId++};
