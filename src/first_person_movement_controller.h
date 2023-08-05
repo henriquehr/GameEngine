@@ -19,7 +19,7 @@ class FirstPersonMovementController {
     float lookSpeed{0.005f};
     float pitch = 0;// up-down rotation
     float yaw = 0;  // left-right rotation
-    glm::mat4 rotationMatrix{1};
+    glm::mat4 rotationMatrix{1.0f};
 
     void setPitchYaw(int pitch, int yaw) {
         this->pitch += pitch * lookSpeed;

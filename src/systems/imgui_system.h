@@ -3,6 +3,7 @@
 #include "../camera.h"
 #include "../first_person_movement_controller.h"
 #include "../game_object.h"
+#include "../renderer.h"
 #include "../window.h"
 
 #include <imgui_impl_sdl2.h>
@@ -10,7 +11,7 @@
 
 class ImguiSystem {
   public:
-    ImguiSystem();
+    ImguiSystem(Device &device, Window &window, Renderer &renderer);
     ~ImguiSystem();
 
     ImguiSystem(const ImguiSystem &) = delete;
@@ -22,4 +23,11 @@ class ImguiSystem {
                    float startupTime);
 
     void render(VkCommandBuffer commandBuffer);
+
+    void init(Window &window, Renderer &renderer);
+
+  private:
+    Device &device;
+
+    VkDescriptorPool imguiPool{};
 };

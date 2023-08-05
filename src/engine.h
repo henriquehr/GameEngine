@@ -50,9 +50,6 @@ class Engine {
 
     void loadGameObjects();
 
-    VkDescriptorPool imguiPool{};
-    void init_imgui(const ImguiSystem &imguiSystem);
-
     // FPS and frame time
     using clock = std::chrono::system_clock;
     float deltaTime = 0.0f;

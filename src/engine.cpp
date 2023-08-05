@@ -10,10 +10,7 @@ Engine::Engine() {
     loadGameObjects();
 }
 
-Engine::~Engine() {
-    vkDestroyDescriptorPool(device.getDevice(), imguiPool, nullptr);
-    ImGui_ImplVulkan_Shutdown();
-}
+Engine::~Engine() {}
 
 void Engine::loadGameObjects() {
     std::shared_ptr<Model> model = Model::createModelFromFile(device, "../../models/smooth_vase.obj");
@@ -28,7 +25,7 @@ void Engine::loadGameObjects() {
     GameObject viking_room = GameObject::createGameObject();
     viking_room.model = model;
     viking_room.transform.translation = {0.5f, 0.3f, 0.0f};
-    viking_room.transform.rotation = {glm::radians(90.0f), 0.0f, glm::radians(-180.0f)};
+    viking_room.transform.rotation = {90.0f, 0.0f, -180.0f};
     viking_room.transform.scale = glm::vec3(0.2f);
     gameObjects.emplace(viking_room.getId(), std::move(viking_room));
 
@@ -36,7 +33,8 @@ void Engine::loadGameObjects() {
     model->setTexture(std::make_unique<Texture>(device, "../../textures/lost_empire-RGBA.png"));
     GameObject lost_empire = GameObject::createGameObject();
     lost_empire.model = model;
-    lost_empire.transform.translation = {0.0f, -10.0f, 0.0f};
+    lost_empire.transform.translation = {0.0f, 16.0f, 0.0f};
+    lost_empire.transform.rotation.x = 180.0f;
     lost_empire.transform.scale = glm::vec3(1.0f, 1.0f, 1.0f);
     gameObjects.emplace(lost_empire.getId(), std::move(lost_empire));
 
@@ -44,7 +42,7 @@ void Engine::loadGameObjects() {
     GameObject pirate = GameObject::createGameObject();
     pirate.model = model;
     pirate.transform.translation = {-1.5f, 0.5f, 0.0f};
-    pirate.transform.rotation.x = glm::radians(180.0f);
+    pirate.transform.rotation.x = 180.0f;
     pirate.transform.scale = glm::vec3(0.5f);
     gameObjects.emplace(pirate.getId(), std::move(pirate));
 
@@ -56,7 +54,7 @@ void Engine::loadGameObjects() {
     gameObjects.emplace(floor.getId(), std::move(floor));
 
     GameObject pointLight = GameObject::makePointLight(1.8f);
-    pointLight.color = {1.0f, 0.4f, 0.4f};
+    pointLight.color = {1.0f, 0.0f, 0.0f};
     pointLight.transform.translation = glm::vec3(-1.5f, -1.6f, -1.0f);
     gameObjects.emplace(pointLight.getId(), std::move(pointLight));
 }
@@ -99,13 +97,11 @@ void Engine::run() {
 
     TextureRenderSystem textureRenderSystem{device, renderer.getSwapChainRenderPass(), globalSetLayout->getDescriptorSetLayout()};
     PointLightSystem pointLightSystem{device, renderer.getSwapChainRenderPass(), globalSetLayout->getDescriptorSetLayout()};
-    ImguiSystem imguiSystem{};
+    ImguiSystem imguiSystem{device, window, renderer};
     Camera camera{};
     GameObject viewerObject = GameObject::createGameObject();
     viewerObject.transform.translation.z = -2.5;
     FirstPersonMovementController cameraController{};
-
-    init_imgui(imguiSystem);
 
     float startupTime = std::chrono::duration<float, std::chrono::seconds::period>(clock::now() - currentTime).count();
     std::cout << "Startup time: " << startupTime << " seconds" << std::endl;
@@ -144,7 +140,7 @@ void Engine::run() {
 
         cameraController.move(deltaTime, viewerObject);
         camera.setView(viewerObject.transform.translation, cameraController.getRotationMatrix());
-        camera.setPerspectiveProjection(glm::radians(60.0f), renderer.getAspectRatio(), 0.1f, 1000.0f);
+        camera.setPerspectiveProjection(60.0f, renderer.getAspectRatio(), 0.1f, 1000.0f);
 
         imguiSystem.preRender(&window, camera, viewerObject, cameraController, startupTime);
 
@@ -155,6 +151,7 @@ void Engine::run() {
             GlobalUbo ubo{};
             ubo.projection = camera.getProjection();
             ubo.view = camera.getView();
+            ubo.inverseView = camera.getInverseView();
             pointLightSystem.update(frameInfo, ubo);
             uboBuffers[frameIndex]->writeToBuffer(&ubo);
             uboBuffers[frameIndex]->flush();
@@ -191,57 +188,4 @@ void Engine::fps() {
     //        frameCount = 0;
     //        lastUpdateTime = newTime;
     //    }
-}
-
-void Engine::init_imgui(const ImguiSystem &imguiSystem) {
-    //1: create descriptor pool for IMGUI
-    // the size of the pool is very oversize, but it's copied from imgui demo itself.
-    VkDescriptorPoolSize pool_sizes[] = {{VK_DESCRIPTOR_TYPE_SAMPLER, 1000},
-                                         {VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1000},
-                                         {VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE, 1000},
-                                         {VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, 1000},
-                                         {VK_DESCRIPTOR_TYPE_UNIFORM_TEXEL_BUFFER, 1000},
-                                         {VK_DESCRIPTOR_TYPE_STORAGE_TEXEL_BUFFER, 1000},
-                                         {VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1000},
-                                         {VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, 1000},
-                                         {VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC, 1000},
-                                         {VK_DESCRIPTOR_TYPE_STORAGE_BUFFER_DYNAMIC, 1000},
-                                         {VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT, 1000}};
-
-    VkDescriptorPoolCreateInfo pool_info = {};
-    pool_info.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
-    pool_info.flags = VK_DESCRIPTOR_POOL_CREATE_FREE_DESCRIPTOR_SET_BIT;
-    pool_info.maxSets = 1000;
-    pool_info.poolSizeCount = std::size(pool_sizes);
-    pool_info.pPoolSizes = pool_sizes;
-
-    VK_CHECK(vkCreateDescriptorPool(device.getDevice(), &pool_info, nullptr, &imguiPool));
-
-    // 2: initialize imgui library
-    //this initializes the core structures of imgui
-    ImGui::CreateContext();
-
-    //this initializes imgui for SDL
-    ImGui_ImplSDL2_InitForVulkan(window.getSDLWindow());
-
-    //this initializes imgui for Vulkan
-    ImGui_ImplVulkan_InitInfo init_info = {};
-    init_info.Instance = device.getInstance();
-    init_info.PhysicalDevice = device.getPhysicalDevice();
-    init_info.Device = device.getDevice();
-    init_info.Queue = device.getGraphicsQueue();
-    init_info.DescriptorPool = imguiPool;
-    init_info.MinImageCount = 3;
-    init_info.ImageCount = 3;
-    init_info.MSAASamples = VK_SAMPLE_COUNT_1_BIT;
-
-    ImGui_ImplVulkan_Init(&init_info, renderer.getSwapChainRenderPass());
-
-    if (VkCommandBuffer commandBuffer = renderer.beginFrame()) {
-        imguiSystem.uploadFonts(commandBuffer);
-        renderer.beginSwapChainRenderPass(commandBuffer);
-        renderer.endSwapChainRenderPass(commandBuffer);
-        renderer.endFrame();
-        //        ImGui_ImplVulkan_DestroyFontUploadObjects();
-    }
 }
