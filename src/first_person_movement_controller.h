@@ -14,22 +14,22 @@ class FirstPersonMovementController {
         int moveDown = SDL_SCANCODE_Q;
     };
 
+    FirstPersonMovementController(glm::vec3 position);
+
+    glm::vec3 position = glm::vec3(0.0f, 0.0f, 0.0f);
+    glm::vec3 front = glm::vec3(0.0f, 0.0f, 1.0f);
+    glm::vec3 up = glm::vec3(0.0f, -1.0f, 0.0f);
+
+    void processKeyPress(float deltaTime);
+
+    void processMouseMovement(float xOffset, float yOffset);
+
+  private:
     KeyMappings keys{};
     float moveSpeed{5.0f};
-    float lookSpeed{0.005f};
+    float lookSpeed{0.5f};
     float pitch = 0;// up-down rotation
-    float yaw = 0;  // left-right rotation
-    glm::mat4 rotationMatrix{1.0f};
+    float yaw = 90; // left-right rotation
 
-    void setPitchYaw(int pitch, int yaw) {
-        this->pitch += pitch * lookSpeed;
-        this->yaw += yaw * lookSpeed;
-    }
-    glm::mat4 getRotationMatrix() {
-        return rotationMatrix;
-    }
-
-    glm::mat4 updateRotationMatrix();
-
-    void move(float deltaTime, GameObject &gameObject);
+    void updateCameraVectors();
 };

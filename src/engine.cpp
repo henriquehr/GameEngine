@@ -99,9 +99,7 @@ void Engine::run() {
     PointLightSystem pointLightSystem{device, renderer.getSwapChainRenderPass(), globalSetLayout->getDescriptorSetLayout()};
     ImguiSystem imguiSystem{device, window, renderer};
     Camera camera{};
-    GameObject viewerObject = GameObject::createGameObject();
-    viewerObject.transform.translation.z = -2.5;
-    FirstPersonMovementController cameraController{};
+    FirstPersonMovementController cameraController{glm::vec3(0.0f, 0.0f, -2.5f)};
 
     float startupTime = std::chrono::duration<float, std::chrono::seconds::period>(clock::now() - currentTime).count();
     std::cout << "Startup time: " << startupTime << " seconds" << std::endl;
@@ -130,7 +128,7 @@ void Engine::run() {
                        e.window.windowID == SDL_GetWindowID(window.getSDLWindow())) {
                 window.setFocused(false);
             } else if (e.type == SDL_MOUSEMOTION && window.isFocused()) {
-                cameraController.setPitchYaw(e.motion.yrel, e.motion.xrel);
+                cameraController.processMouseMovement(e.motion.yrel, e.motion.xrel);
             }
         }
         // Check if window is minimized and skip drawing
@@ -138,11 +136,11 @@ void Engine::run() {
             continue;
         }
 
-        cameraController.move(deltaTime, viewerObject);
-        camera.setView(viewerObject.transform.translation, cameraController.getRotationMatrix());
+        cameraController.processKeyPress(deltaTime);
+        camera.setView(cameraController.position, cameraController.front, cameraController.up);
         camera.setPerspectiveProjection(60.0f, renderer.getAspectRatio(), 0.1f, 1000.0f);
 
-        imguiSystem.preRender(&window, camera, viewerObject, cameraController, startupTime);
+        imguiSystem.preRender(&window, camera, cameraController, startupTime);
 
         if (VkCommandBuffer commandBuffer = renderer.beginFrame()) {
             int frameIndex = renderer.getFrameIndex();

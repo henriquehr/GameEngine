@@ -1,40 +1,55 @@
 
 #include "first_person_movement_controller.h"
 
-glm::mat4 FirstPersonMovementController::updateRotationMatrix() {
-    glm::mat4 yaw_rot = glm::rotate(glm::mat4{1}, -yaw, {0, -1, 0});
-    rotationMatrix = glm::rotate(glm::mat4{yaw_rot}, pitch, {-1, 0, 0});
-    return rotationMatrix;
+FirstPersonMovementController::FirstPersonMovementController(glm::vec3 position) : position(position) {
+    updateCameraVectors();
 }
 
-void FirstPersonMovementController::move(float deltaTime, GameObject &gameObject) {
+void FirstPersonMovementController::processKeyPress(float deltaTime) {
     const Uint8 *currentKeyStates = SDL_GetKeyboardState(nullptr);
 
-    glm::mat4 camRot = updateRotationMatrix();
-    glm::vec3 forwardDir = camRot * glm::vec4(0, 0, 1, 0.f);
-    glm::vec3 rightDir = camRot * glm::vec4(1, 0, 0, 0.f);
-    glm::vec3 upDir = {0, 1, 0};
+    float velocity = moveSpeed * deltaTime;
 
     glm::vec3 moveDir{0.0f};
     if (currentKeyStates[keys.moveForward]) {
-        moveDir += forwardDir;
+        position += front * velocity;
     }
     if (currentKeyStates[keys.moveBackward]) {
-        moveDir -= forwardDir;
+        position -= front * velocity;
     }
     if (currentKeyStates[keys.moveRight]) {
-        moveDir += rightDir;
+        position += glm::normalize(glm::cross(front, up)) * velocity;
     }
     if (currentKeyStates[keys.moveLeft]) {
-        moveDir -= rightDir;
+        position -= glm::normalize(glm::cross(front, up)) * velocity;
     }
     if (currentKeyStates[keys.moveUp]) {
-        moveDir += upDir;
+        position += up * velocity;
     }
     if (currentKeyStates[keys.moveDown]) {
-        moveDir -= upDir;
+        position -= up * velocity;
     }
-    if (glm::dot(moveDir, moveDir) > std::numeric_limits<float>::epsilon()) {
-        gameObject.transform.translation += moveSpeed * deltaTime * glm::normalize(moveDir);
+}
+
+void FirstPersonMovementController::processMouseMovement(float yOffset, float xOffset) {
+    yaw -= xOffset * lookSpeed;
+    pitch += yOffset * lookSpeed;
+
+    // Make sure that when pitch is out of bounds, screen doesn't get flipped
+    if (pitch > 89.0f) {
+        pitch = 89.0f;
     }
+    if (pitch < -89.0f) {
+        pitch = -89.0f;
+    }
+
+    updateCameraVectors();
+}
+
+void FirstPersonMovementController::updateCameraVectors() {
+    glm::vec3 newFront;
+    newFront.x = cos(glm::radians(yaw)) * cos(glm::radians(pitch));
+    newFront.y = sin(glm::radians(pitch));
+    newFront.z = sin(glm::radians(yaw)) * cos(glm::radians(pitch));
+    front = glm::normalize(newFront);
 }

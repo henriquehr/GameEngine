@@ -19,8 +19,7 @@ class ImguiSystem {
 
     void uploadFonts(VkCommandBuffer commandBuffer) const;
 
-    void preRender(Window *window, const Camera &camera, const GameObject &viewerObject, FirstPersonMovementController cameraController,
-                   float startupTime);
+    void preRender(Window *window, const Camera &camera, FirstPersonMovementController cameraController, float startupTime);
 
     void render(VkCommandBuffer commandBuffer);
 
