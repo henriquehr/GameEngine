@@ -78,26 +78,8 @@ void Texture::createDefaultTextureImage() {
 
     mipLevels = static_cast<uint32_t>(std::floor(std::log2(std::max(texDimension, texDimension)))) + 1;
 
-    // Checkerboard pattern
-    //    for (int row = 0; row < texDimension; ++row) {
-    //        for (int col = 0; col < texDimension; ++col) {
-    //            int index = (row * texDimension) + col;
-    //            int index_bpp = index * channels;
-    //            if (row % 2) {
-    //                if (col % 2) {
-    //                    pixels[index_bpp + 0] = 0;
-    //                    pixels[index_bpp + 1] = 0;
-    //                    pixels[index_bpp + 2] = 0;
-    //                }
-    //            } else {
-    //                if (!(col % 2)) {
-    //                    pixels[index_bpp + 0] = 0;
-    //                    pixels[index_bpp + 1] = 0;
-    //                    pixels[index_bpp + 2] = 0;
-    //                }
-    //            }
-    //        }
-    //    }
+    std::fill(std::begin(pixels), std::end(pixels), 64);
+
     VkBuffer stagingBuffer;
     VkDeviceMemory stagingBufferMemory;
     device.createBuffer(imageSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
