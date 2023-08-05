@@ -63,7 +63,7 @@ void TextureRenderSystem::renderGameObjects(FrameInfo frameInfo) {
         }
 
         TexturePushConstantData push{};
-        push.modelMatrix = obj.transform.mat4();
+        push.modelMatrix = obj.transform.modelMatrix();
         push.normalMatrix = obj.transform.normalMatrix();
         push.textureIndex = obj.textureIndex;
 

@@ -62,7 +62,7 @@ void SimpleRenderSystem::renderGameObjects(FrameInfo frameInfo) {
         }
 
         SimplePushConstantData push{};
-        push.modelMatrix = obj.transform.mat4();
+        push.modelMatrix = obj.transform.modelMatrix();
         push.normalMatrix = obj.transform.normalMatrix();
 
         vkCmdPushConstants(frameInfo.commandBuffer, pipelineLayout, VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT, 0,

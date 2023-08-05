@@ -12,9 +12,7 @@ struct TransformComponent {
     glm::vec3 scale{1.0f, 1.0f, 1.0f};
     glm::vec3 rotation{};
 
-    //y(1), x(2), z(3)
-    // https://en.wikipedia.org/wiki/Euler_angles#Rotation_matrix
-    glm::mat4 mat4();
+    glm::mat4 modelMatrix();
 
     glm::mat3 normalMatrix();
 };
