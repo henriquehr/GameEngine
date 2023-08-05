@@ -15,6 +15,8 @@ struct TransformComponent {
     glm::mat4 modelMatrix();
 
     glm::mat3 normalMatrix();
+
+    glm::mat4 calculateRotationMatrix(glm::mat4 &matrix);
 };
 
 struct PointLightComponent {

@@ -58,7 +58,7 @@ void TextureRenderSystem::renderGameObjects(FrameInfo frameInfo) {
 
     for (std::pair<const GameObject::id_t, GameObject> &kv: frameInfo.gameObjects) {
         GameObject &obj = kv.second;
-        if (obj.pointLight != nullptr) {
+        if (obj.model == nullptr) {
             continue;
         }
 

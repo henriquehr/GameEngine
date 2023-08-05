@@ -71,7 +71,7 @@ void Engine::run() {
     std::vector<VkDescriptorImageInfo> descriptorImageInfos;
     int imageIndex = 0;
     for (std::pair<const GameObject::id_t, GameObject> &kv: gameObjects) {
-        if (kv.second.pointLight != nullptr) {
+        if (kv.second.model == nullptr) {
             continue;
         }
         descriptorImageInfos.push_back(kv.second.model->getTexture()->getDescriptorImageInfo());
