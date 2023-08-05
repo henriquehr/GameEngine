@@ -8,7 +8,6 @@ glm::mat4 FirstPersonMovementController::updateRotationMatrix() {
 }
 
 void FirstPersonMovementController::move(float deltaTime, GameObject &gameObject) {
-    glm::vec3 rotate{0};
     const Uint8 *currentKeyStates = SDL_GetKeyboardState(nullptr);
 
     glm::mat4 camRot = updateRotationMatrix();
