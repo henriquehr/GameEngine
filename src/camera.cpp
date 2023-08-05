@@ -10,5 +10,4 @@ void Camera::setPerspectiveProjection(float fovy, float aspect, float near, floa
 
 void Camera::setView(glm::vec3 position, glm::vec3 front, glm::vec3 up) {
     viewMatrix = glm::lookAt(position, position + front, up);
-    inverseViewMatrix = glm::inverse(viewMatrix);
 }

@@ -24,7 +24,7 @@ void main() {
     vec3 specularLight = vec3(0.0);
     vec3 surfaceNormal = normalize(fragNormalWorld);
 
-    vec3 cameraPosWorld = ubo.invView[3].xyz;
+    vec3 cameraPosWorld = inverse(ubo.view)[3].xyz;
     vec3 viewDirection = normalize(cameraPosWorld - fragPosWorld);
 
     for (int i = 0; i < ubo.activeLights; i++) {
@@ -41,7 +41,7 @@ void main() {
         vec3 halfAngle = normalize(directionToLight + viewDirection);
         float blinnTerm = dot(surfaceNormal, halfAngle);
         blinnTerm = clamp(blinnTerm, 0, 1);
-        blinnTerm = pow(blinnTerm, 0.1);// higher = sharper highlight
+        blinnTerm = pow(blinnTerm, 600.1);// higher = sharper highlight
         specularLight += intensity * blinnTerm;
     }
 
