@@ -211,9 +211,7 @@ VkImageView Texture::createImageView(VkImage image, VkFormat format, VkImageAspe
     viewInfo.subresourceRange.layerCount = 1;
 
     VkImageView imageView;
-    if (vkCreateImageView(device.getDevice(), &viewInfo, nullptr, &imageView) != VK_SUCCESS) {
-        throw std::runtime_error("Failed to create texture image view");
-    }
+    VK_CHECK(vkCreateImageView(device.getDevice(), &viewInfo, nullptr, &imageView));
 
     return imageView;
 }
@@ -240,9 +238,7 @@ void Texture::createTextureSampler() {
     samplerInfo.maxLod = static_cast<float>(mipLevels);
     samplerInfo.mipLodBias = 0.0f;
 
-    if (vkCreateSampler(device.getDevice(), &samplerInfo, nullptr, &textureSampler) != VK_SUCCESS) {
-        throw std::runtime_error("Failed to create texture sampler");
-    }
+    VK_CHECK(vkCreateSampler(device.getDevice(), &samplerInfo, nullptr, &textureSampler));
 }
 
 void Texture::transitionImageLayout(VkImage image, VkImageLayout oldLayout, VkImageLayout newLayout, uint32_t mipLevels) {
