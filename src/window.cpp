@@ -22,3 +22,31 @@ void Window::createWindowSurface(VkInstance instance, VkSurfaceKHR *surface) {
         throw std::runtime_error(std::string("Failed to create surface, SDL error:") + SDL_GetError());
     }
 }
+
+bool Window::sdlEvents(SDL_Event e, FirstPersonMovementController &cameraController) {
+    while (SDL_PollEvent(&e)) {
+        ImGui_ImplSDL2_ProcessEvent(&e);
+        if (e.type == SDL_QUIT) {
+            return true;
+        } else if (e.type == SDL_KEYDOWN) {
+            switch (e.key.keysym.sym) {
+                case SDLK_ESCAPE:
+                    return true;
+            }
+        } else if (e.type == SDL_WINDOWEVENT && e.window.event == SDL_WINDOWEVENT_RESIZED &&
+                   e.window.windowID == SDL_GetWindowID(getSDLWindow())) {
+            setFramebufferResized();
+            setWidth(e.window.data1);
+            setHeight(e.window.data2);
+        } else if (e.type == SDL_WINDOWEVENT && e.window.event == SDL_WINDOWEVENT_FOCUS_GAINED &&
+                   e.window.windowID == SDL_GetWindowID(getSDLWindow())) {
+            setFocused(true);
+        } else if (e.type == SDL_WINDOWEVENT && e.window.event == SDL_WINDOWEVENT_FOCUS_LOST &&
+                   e.window.windowID == SDL_GetWindowID(getSDLWindow())) {
+            setFocused(false);
+        } else if (e.type == SDL_MOUSEMOTION && isFocused()) {
+            cameraController.processMouseMovement(e.motion.yrel, e.motion.xrel);
+        }
+    }
+    return false;
+}

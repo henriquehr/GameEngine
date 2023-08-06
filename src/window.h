@@ -1,8 +1,11 @@
 #pragma once
 
-#include "SDL.h"
-#include "SDL_vulkan.h"
-#include "vulkan/vulkan.h"
+#include "first_person_movement_controller.h"
+
+#include <SDL.h>
+#include <SDL_vulkan.h>
+#include <imgui_impl_sdl2.h>
+#include <vulkan/vulkan.h>
 
 #include "stdexcept"
 
@@ -43,6 +46,8 @@ class Window {
     }
 
     void createWindowSurface(VkInstance instance, VkSurfaceKHR *surface);
+
+    bool sdlEvents(SDL_Event e, FirstPersonMovementController &cameraController);
 
   private:
     SDL_Window *window{};

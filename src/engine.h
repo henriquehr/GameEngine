@@ -57,7 +57,5 @@ class Engine {
     std::chrono::time_point<clock> lastUpdateTime = clock::now();
     int frameCount = 0;
 
-    bool sdlEvents(SDL_Event e, FirstPersonMovementController &cameraController);
-
     void fps();
 };

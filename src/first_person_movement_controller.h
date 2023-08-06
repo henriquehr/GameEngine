@@ -1,7 +1,10 @@
 #pragma once
 
-#include "game_object.h"
-#include "window.h"
+#include <SDL_keyboard.h>
+#include <SDL_scancode.h>
+#include <glm/geometric.hpp>
+#include <glm/trigonometric.hpp>
+#include <glm/vec3.hpp>
 
 class FirstPersonMovementController {
   public:

@@ -106,7 +106,7 @@ void Engine::run() {
     bool quit = false;
     SDL_Event e{};
     while (!quit) {
-        quit = sdlEvents(e, cameraController);
+        quit = window.sdlEvents(e, cameraController);
 
         // Check if window is minimized and skip drawing
         if (SDL_GetWindowFlags(window.getSDLWindow()) & SDL_WINDOW_MINIMIZED) {
@@ -142,34 +142,6 @@ void Engine::run() {
     }
 
     vkDeviceWaitIdle(device.getDevice());
-}
-
-bool Engine::sdlEvents(SDL_Event e, FirstPersonMovementController &cameraController) {
-    while (SDL_PollEvent(&e)) {
-        ImGui_ImplSDL2_ProcessEvent(&e);
-        if (e.type == SDL_QUIT) {
-            return true;
-        } else if (e.type == SDL_KEYDOWN) {
-            switch (e.key.keysym.sym) {
-                case SDLK_ESCAPE:
-                    return true;
-            }
-        } else if (e.type == SDL_WINDOWEVENT && e.window.event == SDL_WINDOWEVENT_RESIZED &&
-                   e.window.windowID == SDL_GetWindowID(window.getSDLWindow())) {
-            window.setFramebufferResized();
-            window.setWidth(e.window.data1);
-            window.setHeight(e.window.data2);
-        } else if (e.type == SDL_WINDOWEVENT && e.window.event == SDL_WINDOWEVENT_FOCUS_GAINED &&
-                   e.window.windowID == SDL_GetWindowID(window.getSDLWindow())) {
-            window.setFocused(true);
-        } else if (e.type == SDL_WINDOWEVENT && e.window.event == SDL_WINDOWEVENT_FOCUS_LOST &&
-                   e.window.windowID == SDL_GetWindowID(window.getSDLWindow())) {
-            window.setFocused(false);
-        } else if (e.type == SDL_MOUSEMOTION && window.isFocused()) {
-            cameraController.processMouseMovement(e.motion.yrel, e.motion.xrel);
-        }
-    }
-    return false;
 }
 
 void Engine::fps() {

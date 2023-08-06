@@ -3,8 +3,8 @@
 #include "../utils.h"
 #include "../window.h"
 
-#include "SDL_vulkan.h"
-#include "vulkan/vulkan.h"
+#include <SDL_vulkan.h>
+#include <vulkan/vulkan.h>
 
 #include <iostream>
 #include <set>
