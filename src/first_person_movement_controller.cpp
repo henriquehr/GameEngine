@@ -36,12 +36,7 @@ void FirstPersonMovementController::processMouseMovement(float yOffset, float xO
     pitch += yOffset * lookSpeed;
 
     // Make sure that when pitch is out of bounds, screen doesn't get flipped
-    if (pitch > 89.0f) {
-        pitch = 89.0f;
-    }
-    if (pitch < -89.0f) {
-        pitch = -89.0f;
-    }
+    pitch = glm::clamp(pitch, -89.0f, 89.0f);
 
     updateCameraVectors();
 }
