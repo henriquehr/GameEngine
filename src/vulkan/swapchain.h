@@ -1,7 +1,7 @@
 #pragma once
 
+#include "../utils.h"
 #include "device.h"
-#include "utils.h"
 
 #include "vulkan/vulkan.h"
 

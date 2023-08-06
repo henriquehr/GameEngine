@@ -1,9 +1,9 @@
 #pragma once
 
-#include "buffer.h"
-#include "device.h"
 #include "texture.h"
 #include "utils.h"
+#include "vulkan/buffer.h"
+#include "vulkan/device.h"
 
 #include <glm/glm.hpp>
 #include <glm/gtx/hash.hpp>

@@ -1,10 +1,10 @@
 #pragma once
 
 #include "../camera.h"
-#include "../device.h"
 #include "../frame_info.h"
 #include "../game_object.h"
-#include "../pipeline.h"
+#include "../vulkan/device.h"
+#include "../vulkan/pipeline.h"
 
 #include "glm/glm.hpp"
 #include "glm/gtc/constants.hpp"

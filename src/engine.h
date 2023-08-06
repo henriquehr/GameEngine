@@ -1,18 +1,18 @@
 #pragma once
 
-#include "buffer.h"
 #include "camera.h"
-#include "descriptors.h"
-#include "device.h"
 #include "first_person_movement_controller.h"
 #include "game_object.h"
 #include "model.h"
-#include "renderer.h"
 #include "systems/imgui_system.h"
 #include "systems/point_light_system.h"
 #include "systems/simple_render_system.h"
 #include "systems/texture_render_system.h"
 #include "texture.h"
+#include "vulkan/buffer.h"
+#include "vulkan/descriptors.h"
+#include "vulkan/device.h"
+#include "vulkan/renderer.h"
 #include "window.h"
 
 #include <SDL.h>

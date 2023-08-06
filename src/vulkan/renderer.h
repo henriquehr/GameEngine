@@ -1,9 +1,9 @@
 #pragma once
 
+#include "../utils.h"
+#include "../window.h"
 #include "device.h"
 #include "swapchain.h"
-#include "utils.h"
-#include "window.h"
 
 #include <array>
 #include <cassert>
