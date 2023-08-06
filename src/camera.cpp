@@ -1,6 +1,5 @@
 
 #include "camera.h"
-#include "glm/ext/matrix_clip_space.hpp"
 
 void Camera::setPerspectiveProjection(float fovy, float aspect, float near, float far) {
     assert(glm::abs(aspect - std::numeric_limits<float>::epsilon()) > 0.0f);
